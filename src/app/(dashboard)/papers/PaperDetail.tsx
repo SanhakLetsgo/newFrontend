@@ -7,7 +7,7 @@ import { useState } from "react";
 type Comment = {
   id: string;
   content: string;
-  createdAt: string;
+  createdAt: Date | string;
   user: { name: string | null };
 };
 

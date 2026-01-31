@@ -70,7 +70,7 @@ model WorkoutLog {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, date])
+  @@unique([userId, date])
   @@index([createdAt])
   @@map("workout_logs")
 }
