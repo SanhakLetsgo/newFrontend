@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { WorkoutStatsPanel } from "./WorkoutStatsPanel";
 
 function calcDuration(start: string | null, end: string | null): string {
   if (!start || !end) return "—";
@@ -66,6 +67,7 @@ export function WorkoutsView({
   const [treadmillCalories, setTreadmillCalories] = useState("");
   const [treadmillDistance, setTreadmillDistance] = useState("");
   const [customDetails, setCustomDetails] = useState<{ key: string; value: string }[]>([]);
+  const [statsSession, setStatsSession] = useState<Log | null>(null);
   const [editModal, setEditModal] = useState<Log | null>(null);
   const [editAttended, setEditAttended] = useState(false);
   const [editStart, setEditStart] = useState("");
@@ -100,6 +102,7 @@ export function WorkoutsView({
 
   const openEdit = (log: Log) => {
     if (log.userId !== currentParticipantId) return;
+    setStatsSession(null);
     setEditModal(log);
     setEditAttended(log.attended);
     setEditStart(log.startTime ?? "");
@@ -472,7 +475,10 @@ export function WorkoutsView({
               <tr
                 key={row.id}
                 className={`border-b border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))] ${row.userId === currentParticipantId ? "cursor-pointer" : ""}`}
-                onClick={() => openEdit(row)}
+                onClick={() => {
+                  if (row.userId === currentParticipantId) setStatsSession(row);
+                  else openEdit(row);
+                }}
               >
                 <td className="p-3">{row.user?.name ?? "—"}</td>
                 <td className="p-3">{row.date}</td>
@@ -488,6 +494,19 @@ export function WorkoutsView({
         </table>
       </div>
       </section>
+
+      {statsSession && (
+        <WorkoutStatsPanel
+          session={statsSession}
+          myLogs={logs.filter((l) => l.userId === currentParticipantId)}
+          todayCount={todaySessions.length}
+          onClose={() => setStatsSession(null)}
+          onEdit={() => {
+            if (statsSession) openEdit(statsSession);
+            setStatsSession(null);
+          }}
+        />
+      )}
 
       {editModal && (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">

@@ -24,6 +24,7 @@ model User {
   psTopics            PsTopic[]
   psCodePosts         PsCodePost[]
   psCodePostComments  PsCodePostComment[]
+  psTopicMaterials    PsTopicMaterial[]
 }
 
 model PsNote {
@@ -49,11 +50,30 @@ model PsTopic {
   kind      String   @default("subject") // "subject" | "lesson"
   createdAt DateTime @default(now()) @map("created_at")
 
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  codePosts  PsCodePost[]
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codePosts PsCodePost[]
+  materials PsTopicMaterial[]
 
   @@index([userId])
   @@map("ps_topics")
+}
+
+model PsTopicMaterial {
+  id        String   @id @default(cuid()) @map("_id")
+  topicId   String   @map("topic_id")
+  userId    String   @map("user_id")
+  kind      String   // "link" | "explanation" | "pdf"
+  title     String?  @map("title")
+  url       String?  @map("url")
+  content   String?  @map("content")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  topic PsTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([userId])
+  @@map("ps_topic_materials")
 }
 
 model PsCodePost {

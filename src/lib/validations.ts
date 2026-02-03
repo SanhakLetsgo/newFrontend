@@ -84,3 +84,12 @@ export const psCodePostCommentBody = z.object({
   code: z.string().max(50000).optional(),
   language: z.string().max(50).optional(),
 });
+
+/** 창고리즘 주제별 자료 (링크 / 설명 / PDF 링크) */
+export const psTopicMaterialBody = z.object({
+  topicId: z.string().min(1, "주제를 선택하세요"),
+  kind: z.enum(["link", "explanation", "pdf"]),
+  title: z.string().max(200).optional(),
+  url: z.string().max(2000).optional(),
+  content: z.string().max(50000).optional(),
+});
