@@ -21,6 +21,8 @@ model User {
   paperReviews  PaperReview[]
   paperComments PaperComment[]
   psNotes       PsNote[]
+  psTopics      PsTopic[]
+  psCodePosts   PsCodePost[]
 }
 
 model PsNote {
@@ -37,6 +39,38 @@ model PsNote {
   @@index([userId])
   @@index([date])
   @@map("ps_notes")
+}
+
+model PsTopic {
+  id        String   @id @default(cuid()) @map("_id")
+  userId    String   @map("user_id")
+  title     String
+  kind      String   @default("subject") // "subject" | "lesson"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codePosts  PsCodePost[]
+
+  @@index([userId])
+  @@map("ps_topics")
+}
+
+model PsCodePost {
+  id        String   @id @default(cuid()) @map("_id")
+  topicId   String   @map("topic_id")
+  userId    String   @map("user_id")
+  kind      String   // "solution" | "feedback"
+  title     String?  @map("title")
+  code      String
+  language  String   @default("javascript") @map("language")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  topic PsTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([userId])
+  @@map("ps_code_posts")
 }
 
 model Account {

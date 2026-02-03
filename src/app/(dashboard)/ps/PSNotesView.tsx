@@ -28,7 +28,7 @@ export function PSNotesView({ initialNotes }: { initialNotes: PSNote[] }) {
   useEffect(() => {
     if (noteForDate) setContent(noteForDate.content);
     else setContent("");
-  }, [selectedDate, noteForDate?.id, noteForDate?.content]);
+  }, [selectedDate, noteForDate]);
 
   const save = async () => {
     setError(null);

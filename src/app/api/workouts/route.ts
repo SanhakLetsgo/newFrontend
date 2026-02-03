@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { getParticipantId } from "@/lib/participant";
 import { prisma } from "@/lib/prisma";
 import { workoutCreateBody } from "@/lib/validations";
@@ -36,8 +37,11 @@ export async function POST(req: Request) {
         startTime: startTime?.trim() || null,
         endTime: endTime?.trim() || null,
         workoutType: workoutType?.trim() || null,
-        details: details && Object.keys(details).length > 0 ? details : undefined,
-      },
+        details:
+          details && Object.keys(details).length > 0
+            ? (details as Prisma.InputJsonValue)
+            : undefined,
+      } as Prisma.WorkoutLogUncheckedCreateInput,
     });
     return NextResponse.json(log);
   } catch (e) {

@@ -37,7 +37,7 @@ async function main() {
         workoutType: "러닝",
         startTime: i < 5 ? "07:00" : null,
         endTime: i < 5 ? "07:45" : null,
-      },
+      } as { userId: string; date: string; attended: boolean; workoutType: string; startTime: string | null; endTime: string | null },
     });
   }
   console.log("Created/updated 7 days workout logs");

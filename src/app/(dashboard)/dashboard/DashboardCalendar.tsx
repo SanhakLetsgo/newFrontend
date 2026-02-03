@@ -32,7 +32,7 @@ export function DashboardCalendar({
   const days = getCalendarDays(year, month);
 
   return (
-    <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 backdrop-blur-sm p-5 shadow-lg shadow-black/10">
+    <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/90 backdrop-blur-sm p-6 shadow-lg shadow-black/5">
       <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-5 tracking-tight">
         {year}년 {month + 1}월
       </h2>

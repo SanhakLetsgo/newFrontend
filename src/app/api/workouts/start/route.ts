@@ -27,7 +27,13 @@ export async function POST(req: Request) {
       clientStartTime ??
       `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     const log = await prisma.workoutLog.create({
-      data: { userId: participantId, date, attended: true, startTime, workoutType: workoutType?.trim() || null },
+      data: {
+        userId: participantId,
+        date,
+        attended: true,
+        startTime,
+        workoutType: workoutType?.trim() || null,
+      } as { userId: string; date: string; attended: boolean; startTime: string; workoutType: string | null },
     });
     return NextResponse.json(log);
   } catch (e) {

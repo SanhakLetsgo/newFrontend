@@ -313,89 +313,100 @@ export function WorkoutsView({
         <h2 className="text-base font-semibold text-[hsl(var(--foreground))] mb-4 pb-2 border-b border-[hsl(var(--border))]">
           내 현황
         </h2>
-      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))] p-4 mb-4">
-        <h3 className="text-sm font-semibold mb-2">오늘 기록</h3>
-        {todaySessions.length > 0 ? (
-          <>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-3">
-              <dt>출석</dt>
-              <dd>{todayAttended ? "O" : "X"}</dd>
-              <dt>오늘 회차</dt>
-              <dd>{todaySessions.length}회</dd>
-            </dl>
-            <ul className="text-sm mb-3 space-y-1">
-              {todaySessions.map((s, i) => (
-                <li key={s.id}>
-                  {todaySessions.length - i}회: {s.startTime ?? "—"} ~ {s.endTime ?? "진행 중"} ({calcDuration(s.startTime, s.endTime)})
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <p className="text-sm text-[hsl(var(--muted-foreground))] mb-3">오늘 기록이 없습니다.</p>
-        )}
-        <div className="mb-3">
-          <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1">
-            운동 종목 <span className="text-[hsl(var(--accent))]">(시작 전 필수)</span>
-          </label>
-          <input
-            type="text"
-            value={workoutType}
-            onChange={(e) => setWorkoutType(e.target.value)}
-            placeholder="예: 러닝머신, 러닝, 헬스, 수영"
-            className="w-full max-w-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
-          />
-        </div>
-        {TREADMILL_TYPES.some((t) => workoutType.trim().toLowerCase().includes(t.toLowerCase())) ? (
-          <div className="mb-3 p-2 rounded-lg bg-[hsl(var(--muted))]/50 grid grid-cols-3 gap-2">
-            <input type="number" min={0} value={treadmillMinutes} onChange={(e) => setTreadmillMinutes(e.target.value)} placeholder="분" className="rounded border border-[hsl(var(--border))] px-2 py-1 text-sm" />
-            <input type="number" min={0} value={treadmillCalories} onChange={(e) => setTreadmillCalories(e.target.value)} placeholder="kcal" className="rounded border border-[hsl(var(--border))] px-2 py-1 text-sm" />
-            <input type="number" min={0} step={0.1} value={treadmillDistance} onChange={(e) => setTreadmillDistance(e.target.value)} placeholder="km" className="rounded border border-[hsl(var(--border))] px-2 py-1 text-sm" />
-          </div>
-        ) : workoutType.trim() !== "" ? (
-          <div className="mb-3 p-2 rounded-lg bg-[hsl(var(--muted))]/50 space-y-1">
-            {customDetails.map((row, i) => (
-              <div key={i} className="flex gap-1">
-                <input type="text" value={row.key} onChange={(e) => setCustomDetails((p) => p.map((r, j) => (j === i ? { ...r, key: e.target.value } : r)))} placeholder="항목" className="flex-1 rounded border px-2 py-1 text-sm" />
-                <input type="text" value={row.value} onChange={(e) => setCustomDetails((p) => p.map((r, j) => (j === i ? { ...r, value: e.target.value } : r)))} placeholder="값" className="flex-1 rounded border px-2 py-1 text-sm" />
-                <button type="button" onClick={() => setCustomDetails((p) => p.filter((_, j) => j !== i))} className="text-red-400 text-sm">삭제</button>
-              </div>
-            ))}
-            <button type="button" onClick={() => setCustomDetails((p) => [...p, { key: "", value: "" }])} className="text-xs text-[hsl(var(--accent))]">+ 항목 추가</button>
-          </div>
-        ) : null}
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={toggleTodayAttendance}
-            disabled={busy}
-            className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--muted))] px-3 py-1.5 text-sm hover:opacity-90 disabled:opacity-50"
-          >
-            {todayAttended ? "출석 취소" : "출석 체크"}
-          </button>
-          <button
-            type="button"
-            onClick={startToday}
-            disabled={busy || !workoutType.trim()}
-            className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--muted))] px-3 py-1.5 text-sm hover:opacity-90 disabled:opacity-50"
-            title={!workoutType.trim() ? "운동 종목을 먼저 입력하세요" : undefined}
-          >
-            운동 시작
-          </button>
-          <button
-            type="button"
-            onClick={endToday}
-            disabled={busy || !hasActiveSession}
-            className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--muted))] px-3 py-1.5 text-sm hover:opacity-90 disabled:opacity-50"
-          >
-            운동 종료
-          </button>
-        </div>
-        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">시작/종료 버튼으로 재면서 기록하거나, 수동으로 추가할 수 있습니다.</p>
 
-        <div className="mt-4 pt-3 border-t border-[hsl(var(--border))]">
-          <button type="button" onClick={() => setShowManual((v) => !v)} className="text-sm text-[hsl(var(--accent))] hover:underline">
-            {showManual ? "수동 입력 접기" : "수동으로 기록 추가"}
+        {/* ★ 오늘 운동 기록하기 – 상단에 강조 */}
+        <div className="rounded-xl border border-[hsl(var(--accent))]/30 bg-[hsl(var(--accent))]/5 p-5 mb-5">
+          <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3 flex items-center gap-2">
+            <span className="text-[hsl(var(--accent))]">+</span> 오늘 운동 기록하기
+          </h3>
+          <div className="mb-3">
+            <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1.5">
+              운동 종목 <span className="text-[hsl(var(--accent))]">(필수)</span>
+            </label>
+            <input
+              type="text"
+              value={workoutType}
+              onChange={(e) => setWorkoutType(e.target.value)}
+              placeholder="예: 러닝머신, 헬스, 수영"
+              className="w-full max-w-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
+            />
+          </div>
+          {TREADMILL_TYPES.some((t) => workoutType.trim().toLowerCase().includes(t.toLowerCase())) ? (
+            <div className="mb-3 p-2 rounded-lg bg-[hsl(var(--muted))]/50 grid grid-cols-3 gap-2">
+              <input type="number" min={0} value={treadmillMinutes} onChange={(e) => setTreadmillMinutes(e.target.value)} placeholder="분" className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-2 py-1.5 text-sm" />
+              <input type="number" min={0} value={treadmillCalories} onChange={(e) => setTreadmillCalories(e.target.value)} placeholder="kcal" className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-2 py-1.5 text-sm" />
+              <input type="number" min={0} step={0.1} value={treadmillDistance} onChange={(e) => setTreadmillDistance(e.target.value)} placeholder="km" className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-2 py-1.5 text-sm" />
+            </div>
+          ) : workoutType.trim() !== "" ? (
+            <div className="mb-3 p-2 rounded-lg bg-[hsl(var(--muted))]/50 space-y-1">
+              {customDetails.map((row, i) => (
+                <div key={i} className="flex gap-1">
+                  <input type="text" value={row.key} onChange={(e) => setCustomDetails((p) => p.map((r, j) => (j === i ? { ...r, key: e.target.value } : r)))} placeholder="항목" className="flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-2 py-1 text-sm" />
+                  <input type="text" value={row.value} onChange={(e) => setCustomDetails((p) => p.map((r, j) => (j === i ? { ...r, value: e.target.value } : r)))} placeholder="값" className="flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-2 py-1 text-sm" />
+                  <button type="button" onClick={() => setCustomDetails((p) => p.filter((_, j) => j !== i))} className="text-red-400 text-sm px-1">삭제</button>
+                </div>
+              ))}
+              <button type="button" onClick={() => setCustomDetails((p) => [...p, { key: "", value: "" }])} className="text-xs text-[hsl(var(--accent))] hover:underline">+ 항목 추가</button>
+            </div>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={startToday}
+              disabled={busy || !workoutType.trim()}
+              className="rounded-lg bg-[hsl(var(--accent))] px-4 py-2.5 text-sm font-medium text-[hsl(var(--accent-foreground))] hover:opacity-95 disabled:opacity-50 transition-opacity"
+              title={!workoutType.trim() ? "운동 종목을 먼저 입력하세요" : undefined}
+            >
+              운동 시작
+            </button>
+            <button
+              type="button"
+              onClick={endToday}
+              disabled={busy || !hasActiveSession}
+              className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))] px-4 py-2.5 text-sm font-medium hover:bg-[hsl(var(--muted))]/80 disabled:opacity-50 transition-colors"
+            >
+              운동 종료
+            </button>
+            <button
+              type="button"
+              onClick={toggleTodayAttendance}
+              disabled={busy}
+              className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))] px-4 py-2.5 text-sm font-medium hover:bg-[hsl(var(--muted))]/80 disabled:opacity-50 transition-colors"
+            >
+              {todayAttended ? "출석 취소" : "출석 체크"}
+            </button>
+          </div>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">시작 → 종료로 한 번에 기록하거나, 아래에서 수동으로 추가할 수 있어요.</p>
+        </div>
+
+        {/* 오늘 기록 요약 */}
+        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 p-4 mb-4">
+          <h3 className="text-sm font-semibold mb-2">오늘 기록</h3>
+          {todaySessions.length > 0 ? (
+            <>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-3">
+                <dt className="text-[hsl(var(--muted-foreground))]">출석</dt>
+                <dd>{todayAttended ? "O" : "X"}</dd>
+                <dt className="text-[hsl(var(--muted-foreground))]">오늘 회차</dt>
+                <dd>{todaySessions.length}회</dd>
+              </dl>
+              <ul className="text-sm mb-0 space-y-1">
+                {todaySessions.map((s, i) => (
+                  <li key={s.id}>
+                    {todaySessions.length - i}회: {s.startTime ?? "—"} ~ {s.endTime ?? "진행 중"} ({calcDuration(s.startTime, s.endTime)})
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="text-sm text-[hsl(var(--muted-foreground))]">오늘 기록이 없습니다. 위에서 운동 종목을 입력하고 「운동 시작」을 눌러 추가하세요.</p>
+          )}
+        </div>
+
+        {/* 수동으로 기록 추가 – 항상 보이게 */}
+        <div className="mb-4">
+          <button type="button" onClick={() => setShowManual((v) => !v)} className="text-sm font-medium text-[hsl(var(--accent))] hover:underline flex items-center gap-1">
+            {showManual ? "▲ 수동 입력 접기" : "▼ 수동으로 기록 추가 (날짜·시간 직접 입력)"}
           </button>
           {showManual && (
             <div className="mt-3 p-3 rounded-lg bg-[hsl(var(--muted))]/50 space-y-2">
@@ -441,7 +452,6 @@ export function WorkoutsView({
             </div>
           )}
         </div>
-      </div>
 
       <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] mt-4">
         <table className="w-full text-sm">

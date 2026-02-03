@@ -16,7 +16,7 @@ type Paper = {
   title: string;
   url: string | null;
   tags: string[];
-  authors: string[];
+  authors?: string[];
   readAt: string;
   pdfPath: string | null;
   mySummary: string | null;

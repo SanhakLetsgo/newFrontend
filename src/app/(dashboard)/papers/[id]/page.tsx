@@ -7,11 +7,11 @@ import { PaperDetail } from "../PaperDetail";
 export default async function PaperDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
   const participantId = await getParticipantId();
   if (!participantId) return null;
-  const { id } = await params;
+  const { id } = params;
   const paper = await prisma.paper.findUnique({
     where: { id },
     include: {

@@ -1,20 +1,8 @@
-import { cookies } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
-const COOKIE_NAME = "participant_id";
-
+/** 로그인한 사용자 ID (NextAuth 세션만 사용) */
 export async function getParticipantId(): Promise<string | null> {
-  const store = await cookies();
-  return store.get(COOKIE_NAME)?.value ?? null;
-}
-
-export function participantCookieHeader(value: string, maxAge = 365 * 24 * 60 * 60) {
-  return {
-    "Set-Cookie": `${COOKIE_NAME}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax`,
-  };
-}
-
-export function clearParticipantCookieHeader() {
-  return {
-    "Set-Cookie": `${COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`,
-  };
+  const session = await getServerSession(authOptions);
+  return session?.user?.id ?? null;
 }

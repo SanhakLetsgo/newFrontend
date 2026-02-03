@@ -1,49 +1,67 @@
 import { getParticipantId } from "@/lib/participant";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { DashboardNav } from "./DashboardNav";
+import { HeaderSignOut } from "@/app/(dashboard)/HeaderSignOut";
 
 export default async function DashboardLayout({
   children,
 }: { children: React.ReactNode }) {
   const participantId = await getParticipantId();
-  if (!participantId) redirect("/");
-  const user = await prisma.user.findUnique({
-    where: { id: participantId },
-    select: { name: true },
-  });
-  if (!user) redirect("/");
-  const displayName = user.name ?? "참여자";
+  let displayName: string | null = null;
+  if (participantId) {
+    const user = await prisma.user.findUnique({
+      where: { id: participantId },
+      select: { name: true },
+    });
+    displayName = user?.name ?? "참여자";
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[hsl(var(--background))]">
-      <header className="sticky top-0 z-10 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))]">
-        <div className="flex items-center justify-between h-12 px-4 max-w-4xl mx-auto">
+      <header className="sticky top-0 z-10 border-b border-[hsl(var(--border))]/80 bg-[hsl(var(--background))]/90 backdrop-blur-md">
+        <div className="flex items-center justify-between h-14 px-5 sm:px-6 max-w-4xl mx-auto">
           <Link
             href="/dashboard"
-            className="font-semibold text-[hsl(var(--foreground))] hover:opacity-80 hover:underline"
+            className="font-semibold text-[hsl(var(--foreground))] tracking-tight hover:text-[hsl(var(--accent))] transition-colors"
             title="홈으로"
           >
-            警告(위험한 일을 조심하거나 삼가도록 미리 일러서 주의를 주다.)
+            警告
           </Link>
           <nav className="flex items-center gap-1">
-            <DashboardNav />
-            <Link
-              href="/dashboard"
-              className="text-sm text-[hsl(var(--muted-foreground))] px-2 py-1 rounded hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]"
-            >
-              {displayName}
-            </Link>
-            <Link
-              href="/api/session/clear?redirect=/"
-              className="text-sm text-[hsl(var(--muted-foreground))] px-2 py-1 rounded hover:bg-[hsl(var(--muted))]"
-            >
-              참여자 변경
-            </Link>
+            {participantId ? (
+              <>
+                <DashboardNav />
+                <span className="text-[hsl(var(--muted-foreground))] mx-1">·</span>
+                <Link
+                  href="/dashboard"
+                  className="text-sm text-[hsl(var(--muted-foreground))] px-3 py-2 rounded-lg hover:bg-[hsl(var(--muted))]/80 hover:text-[hsl(var(--foreground))] transition-colors"
+                >
+                  {displayName}
+                </Link>
+                <HeaderSignOut />
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm text-[hsl(var(--muted-foreground))] px-3 py-2 rounded-lg hover:bg-[hsl(var(--muted))]/80 hover:text-[hsl(var(--foreground))] transition-colors"
+                >
+                  로그인
+                </Link>
+                <span className="text-[hsl(var(--muted-foreground))] mx-0.5">·</span>
+                <Link
+                  href="/register"
+                  className="text-sm font-medium text-[hsl(var(--accent))] px-3 py-2 rounded-lg hover:bg-[hsl(var(--accent))]/10 transition-colors"
+                >
+                  회원가입
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>
-      <main className="flex-1 p-5 sm:p-6 max-w-4xl mx-auto w-full">{children}</main>
+      <main className="flex-1 p-6 sm:p-8 max-w-4xl mx-auto w-full">{children}</main>
     </div>
   );
 }

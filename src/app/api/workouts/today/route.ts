@@ -14,6 +14,10 @@ export async function GET() {
   const sessions = await prisma.workoutLog.findMany({
     where: { userId: participantId, date: todayStr() },
   });
-  sessions.sort((a, b) => (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0));
-  return NextResponse.json(sessions);
+  const sorted = [...sessions].sort((a, b) => {
+    const at = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bt = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return bt - at;
+  });
+  return NextResponse.json(sorted);
 }

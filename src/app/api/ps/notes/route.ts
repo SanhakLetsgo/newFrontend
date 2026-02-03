@@ -3,6 +3,12 @@ import { getParticipantId } from "@/lib/participant";
 import { prisma } from "@/lib/prisma";
 import { psNoteBody } from "@/lib/validations";
 
+type PsNoteDelegate = {
+  findMany: (args: { where: object; orderBy?: object }) => Promise<unknown[]>;
+  upsert: (args: object) => Promise<unknown>;
+};
+const db = prisma as typeof prisma & { psNote: PsNoteDelegate };
+
 export async function GET(req: Request) {
   const participantId = await getParticipantId();
   if (!participantId) {
@@ -15,7 +21,7 @@ export async function GET(req: Request) {
   const where: { userId: string; date?: { gte?: string; lte?: string } } = { userId: participantId };
   if (from && dateRegex.test(from)) where.date = { ...where.date, gte: from };
   if (to && dateRegex.test(to)) where.date = { ...where.date, lte: to };
-  const notes = await prisma.psNote.findMany({
+  const notes = await db.psNote.findMany({
     where,
     orderBy: { date: "desc" },
   });
@@ -37,7 +43,7 @@ export async function POST(req: Request) {
       );
     }
     const { date, content } = parsed.data;
-    const note = await prisma.psNote.upsert({
+    const note = await db.psNote.upsert({
       where: {
         userId_date: { userId: participantId, date },
       },

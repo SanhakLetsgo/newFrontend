@@ -5,13 +5,13 @@ import { paperBody } from "@/lib/validations";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   const participantId = await getParticipantId();
   if (!participantId) {
     return NextResponse.json({ error: "참여자를 선택해 주세요." }, { status: 401 });
   }
-  const { id } = await params;
+  const { id } = params;
   const paper = await prisma.paper.findUnique({
     where: { id },
     include: {
@@ -28,13 +28,13 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   const participantId = await getParticipantId();
   if (!participantId) {
     return NextResponse.json({ error: "참여자를 선택해 주세요." }, { status: 401 });
   }
-  const { id } = await params;
+  const { id } = params;
   try {
     const body = await req.json();
     const parsed = paperBody.partial().safeParse(body);
@@ -69,13 +69,13 @@ export async function PATCH(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   const participantId = await getParticipantId();
   if (!participantId) {
     return NextResponse.json({ error: "참여자를 선택해 주세요." }, { status: 401 });
   }
-  const { id } = await params;
+  const { id } = params;
   const paper = await prisma.paper.findFirst({
     where: { id, userId: participantId },
   });

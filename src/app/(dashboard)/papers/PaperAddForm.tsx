@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function PaperAddForm({ onDone }: { onDone?: () => void } = {}) {
+type PaperAddFormProps = { onDone?: () => void };
+export function PaperAddForm({ onDone }: PaperAddFormProps = {}) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [tagsStr, setTagsStr] = useState("");

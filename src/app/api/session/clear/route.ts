@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
-import { clearParticipantCookieHeader } from "@/lib/participant";
 
+/** 로그아웃은 상단 '로그아웃' 버튼을 사용하세요. */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const redirectTo = url.searchParams.get("redirect") ?? "/";
-  const res = NextResponse.redirect(new URL(redirectTo, req.url));
-  Object.entries(clearParticipantCookieHeader()).forEach(([key, value]) => {
-    res.headers.append(key, value);
-  });
-  return res;
+  return NextResponse.redirect(new URL(redirectTo, req.url));
 }

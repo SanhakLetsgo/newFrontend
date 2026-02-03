@@ -3,40 +3,30 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+const navItems = [
+  { href: "/workouts", label: "운동", active: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" },
+  { href: "/papers", label: "논문", active: "bg-violet-500/15 text-violet-400 border border-violet-500/20" },
+  { href: "/ps", label: "창고리즘", active: "bg-amber-500/15 text-amber-400 border border-amber-500/20" },
+] as const;
+
 export function DashboardNav() {
   const pathname = usePathname();
   return (
     <>
-      <Link
-        href="/workouts"
-        className={`text-sm px-3 py-1.5 rounded-md ${
-          pathname.startsWith("/workouts")
-            ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-            : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]"
-        }`}
-      >
-        운동
-      </Link>
-      <Link
-        href="/papers"
-        className={`text-sm px-3 py-1.5 rounded-md ${
-          pathname.startsWith("/papers")
-            ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-            : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]"
-        }`}
-      >
-        논문
-      </Link>
-      <Link
-        href="/ps"
-        className={`text-sm px-3 py-1.5 rounded-md ${
-          pathname.startsWith("/ps")
-            ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-            : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]"
-        }`}
-      >
-        창고리즘
-      </Link>
+      {navItems.map(({ href, label, active }) => {
+        const isActive = pathname.startsWith(href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={`text-sm font-medium px-3.5 py-2 rounded-lg border border-transparent transition-all duration-200 ${
+              isActive ? active : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))]/60 hover:text-[hsl(var(--foreground))]"
+            }`}
+          >
+            {label}
+          </Link>
+        );
+      })}
     </>
   );
 }

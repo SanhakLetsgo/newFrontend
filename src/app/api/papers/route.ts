@@ -94,7 +94,7 @@ export async function POST(req: Request) {
         authors,
         readAt,
         mySummary,
-      },
+      } as { userId: string; title: string; url: string | null; tags: string[]; authors: string[]; readAt: string; mySummary: string | null },
     });
 
     if (pdfFile) {

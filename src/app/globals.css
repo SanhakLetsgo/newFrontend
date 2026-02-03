@@ -2,33 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 다크 모드 (기본) – 남색 줄이고 밝은 포인트 추가 */
+/* 우아한 다크 테마 */
 :root {
-  --background: 220 20% 12%;
-  --foreground: 213 25% 92%;
-  --border: 220 18% 22%;
+  --background: 222 24% 11%;
+  --foreground: 213 22% 94%;
+  --border: 220 18% 24%;
   --primary: 210 40% 98%;
   --primary-foreground: 222 47% 11%;
   --muted: 220 18% 18%;
-  --muted-foreground: 215 18% 68%;
-  --card: 220 18% 16%;
-  --card-foreground: 213 25% 92%;
+  --muted-foreground: 215 16% 65%;
+  --card: 220 20% 15%;
+  --card-foreground: 213 22% 94%;
   --accent: 199 89% 48%;
   --accent-foreground: 0 0% 100%;
+  --ring: 199 89% 48%;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased;
+  font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-/* 입력 필드 다크 스타일 */
+/* 입력 필드 – 우아한 포커스 */
 input,
 textarea,
 select {
-  @apply bg-[hsl(var(--muted))] border-[hsl(var(--border))] text-[hsl(var(--foreground))];
+  @apply bg-[hsl(var(--muted))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] rounded-lg;
+  @apply transition-[box-shadow,border-color] duration-200;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  @apply outline-none ring-2 ring-[hsl(var(--ring))]/50 border-[hsl(var(--ring))]/40;
 }
 
 input::placeholder,
 textarea::placeholder {
-  @apply text-[hsl(var(--muted-foreground))];
+  @apply text-[hsl(var(--muted-foreground))]/70;
+}
+
+/* 버튼·링크 호버 전환 */
+a, button {
+  @apply transition-colors duration-200;
 }

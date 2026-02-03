@@ -5,13 +5,13 @@ import { workoutLogBody } from "@/lib/validations";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   const participantId = await getParticipantId();
   if (!participantId) {
     return NextResponse.json({ error: "참여자를 선택해 주세요." }, { status: 401 });
   }
-  const { id } = await params;
+  const { id } = params;
   try {
     const body = await req.json();
     const parsed = workoutLogBody.pick({ attended: true, startTime: true, endTime: true, details: true }).partial().safeParse(body);

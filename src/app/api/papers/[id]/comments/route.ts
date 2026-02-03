@@ -5,13 +5,13 @@ import { paperCommentBody } from "@/lib/validations";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   const participantId = await getParticipantId();
   if (!participantId) {
     return NextResponse.json({ error: "참여자를 선택해 주세요." }, { status: 401 });
   }
-  const { id: paperId } = await params;
+  const { id: paperId } = params;
   const comments = await prisma.paperComment.findMany({
     where: { paperId },
     include: { user: { select: { name: true } } },
@@ -22,13 +22,13 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   const participantId = await getParticipantId();
   if (!participantId) {
     return NextResponse.json({ error: "참여자를 선택해 주세요." }, { status: 401 });
   }
-  const { id: paperId } = await params;
+  const { id: paperId } = params;
   const paper = await prisma.paper.findUnique({ where: { id: paperId } });
   if (!paper) {
     return NextResponse.json({ error: "논문을 찾을 수 없습니다." }, { status: 404 });
