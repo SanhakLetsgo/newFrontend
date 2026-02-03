@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getParticipantId } from "@/lib/participant";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -24,7 +25,7 @@ export default async function PapersPage({
   searchParams: Promise<{ add?: string }>;
 }) {
   const participantId = await getParticipantId();
-  if (!participantId) return null;
+  if (!participantId) redirect("/login");
   const params = await searchParams;
   const showAdd = params.add === "1";
   const { start: weekStart, end: weekEnd } = getWeekRange();
@@ -56,12 +57,12 @@ export default async function PapersPage({
   const hasAnyParticipant = allParticipantsStats.some((p) => p.weekCount > 0);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">논문</h1>
+    <div className="space-y-6 sm:space-y-8">
+      <h1 className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))]">논문</h1>
 
       {/* 전체 참여자 현황 - 이번 주 작성자가 있을 때만 표시 */}
       {hasAnyParticipant && (
-        <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-5 shadow-lg shadow-black/5">
+        <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-4 sm:p-5 shadow-lg shadow-black/5">
           <h2 className="text-base font-semibold text-[hsl(var(--foreground))] mb-4 pb-2 border-b border-[hsl(var(--border))]">
             전체 참여자 현황
           </h2>
@@ -91,8 +92,8 @@ export default async function PapersPage({
       )}
 
       {/* 내 현황 */}
-      <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-5 shadow-lg shadow-black/5">
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-[hsl(var(--border))]">
+      <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-4 sm:p-5 shadow-lg shadow-black/5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-2 border-b border-[hsl(var(--border))]">
           <h2 className="text-base font-semibold text-[hsl(var(--foreground))]">내 현황</h2>
           {!showAdd && (
             <Link

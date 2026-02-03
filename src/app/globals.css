@@ -20,12 +20,16 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased;
   font-feature-settings: "rlig" 1, "calt" 1;
+  /* 모바일 터치 영역 */
+  -webkit-tap-highlight-color: transparent;
 }
+
 
 /* 입력 필드 – 우아한 포커스 */
 input,

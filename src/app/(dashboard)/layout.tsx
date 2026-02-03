@@ -18,24 +18,24 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[hsl(var(--background))]">
+    <div className="min-h-screen flex flex-col bg-[hsl(var(--background))] min-h-[100dvh]">
       <header className="sticky top-0 z-10 border-b border-[hsl(var(--border))]/80 bg-[hsl(var(--background))]/90 backdrop-blur-md">
-        <div className="flex items-center justify-between h-14 px-5 sm:px-6 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between min-h-14 h-14 px-3 sm:px-6 max-w-4xl mx-auto w-full gap-2">
           <Link
             href="/dashboard"
-            className="font-semibold text-[hsl(var(--foreground))] tracking-tight hover:text-[hsl(var(--accent))] transition-colors"
+            className="font-semibold text-[hsl(var(--foreground))] tracking-tight hover:text-[hsl(var(--accent))] transition-colors shrink-0"
             title="홈으로"
           >
             警告
           </Link>
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-0.5 sm:gap-1 flex-wrap justify-end min-w-0">
             {participantId ? (
               <>
                 <DashboardNav />
                 <span className="text-[hsl(var(--muted-foreground))] mx-1">·</span>
                 <Link
                   href="/dashboard"
-                  className="text-sm text-[hsl(var(--muted-foreground))] px-3 py-2 rounded-lg hover:bg-[hsl(var(--muted))]/80 hover:text-[hsl(var(--foreground))] transition-colors"
+                  className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] px-2 sm:px-3 py-2 rounded-lg hover:bg-[hsl(var(--muted))]/80 hover:text-[hsl(var(--foreground))] transition-colors truncate max-w-[80px] sm:max-w-none"
                 >
                   {displayName}
                 </Link>
@@ -61,7 +61,7 @@ export default async function DashboardLayout({
           </nav>
         </div>
       </header>
-      <main className="flex-1 p-6 sm:p-8 max-w-4xl mx-auto w-full">{children}</main>
+      <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-4xl mx-auto w-full box-border">{children}</main>
     </div>
   );
 }

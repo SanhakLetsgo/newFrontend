@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getParticipantId } from "@/lib/participant";
 import { db } from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -29,7 +30,7 @@ export default async function PSTopicPage({
   params: { id: string };
 }) {
   const participantId = await getParticipantId();
-  if (!participantId) return null;
+  if (!participantId) redirect("/login");
 
   const { id } = params;
   const topic = await db.psTopic.findUnique({

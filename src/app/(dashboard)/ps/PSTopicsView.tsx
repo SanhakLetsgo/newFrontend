@@ -259,11 +259,11 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
               key={topic.id}
               className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 shadow-xl"
             >
-              <div className="flex w-full items-center justify-between gap-2 px-5 py-4">
+              <div className="flex w-full items-center justify-between gap-2 px-3 sm:px-5 py-3 sm:py-4">
                 <button
                   type="button"
                   onClick={() => openTopic(topic.id)}
-                  className="flex flex-1 items-center gap-3 text-left transition-colors hover:bg-white/5 rounded-lg -m-1 p-1 min-w-0"
+                  className="flex flex-1 items-center gap-2 sm:gap-3 text-left transition-colors hover:bg-white/5 rounded-lg -m-1 p-1 min-w-0 min-h-[44px]"
                 >
                   <span className="text-zinc-500 shrink-0">
                     {expandedId === topic.id ? "▼" : "▶"}
@@ -279,14 +279,14 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
                     e.stopPropagation();
                     deleteTopic(topic.id);
                   }}
-                  className="shrink-0 text-xs text-zinc-500 hover:text-red-400 transition-colors py-1 px-2"
+                  className="shrink-0 text-xs text-zinc-500 hover:text-red-400 transition-colors py-2 px-3 min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   삭제
                 </button>
               </div>
 
               {expandedId === topic.id && (
-                <div className="border-t border-white/10 bg-zinc-950/50 p-5">
+                <div className="border-t border-white/10 bg-zinc-950/50 p-3 sm:p-5">
                   {/* 정답 코드 */}
                   <Section
                     title="정답 코드"
@@ -319,7 +319,7 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
 
                   {(addingCode != null && addingCode.topicId === topic.id) ||
                   (editingPost != null && editingPost.topicId === topic.id) ? (
-                    <div className="mt-8 rounded-2xl border border-amber-500/20 bg-zinc-900/80 p-5">
+                    <div className="mt-6 sm:mt-8 rounded-2xl border border-amber-500/20 bg-zinc-900/80 p-3 sm:p-5">
                       <h4 className="mb-4 text-sm font-semibold text-amber-400/90">
                         {editingPost
                           ? editingPost.kind === "solution"
@@ -329,8 +329,8 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
                             ? "정답 코드 작성"
                             : "피드백 요청 작성"}
                       </h4>
-                      <div className="mb-4 flex flex-wrap gap-4">
-                        <div className="min-w-[200px] flex-1">
+                      <div className="mb-4 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+                        <div className="min-w-0 flex-1">
                           <label className="mb-1 block text-xs text-zinc-500">제목 (선택)</label>
                           <input
                             type="text"
@@ -340,7 +340,7 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
                             className="w-full rounded-lg border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-amber-500/50 focus:outline-none"
                           />
                         </div>
-                        <div className="min-w-[160px]">
+                        <div className="min-w-0 sm:min-w-[160px]">
                           <label className="mb-1 block text-xs text-zinc-500">작성자 (선택)</label>
                           <input
                             type="text"

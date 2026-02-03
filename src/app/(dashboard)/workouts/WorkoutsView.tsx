@@ -283,7 +283,7 @@ export function WorkoutsView({
   return (
     <>
       {/* 전체 참여자 현황 */}
-      <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-5 mb-8 shadow-lg shadow-black/5">
+      <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-4 sm:p-5 mb-6 sm:mb-8 shadow-lg shadow-black/5">
         <h2 className="text-base font-semibold text-[hsl(var(--foreground))] mb-4 pb-2 border-b border-[hsl(var(--border))]">
           전체 참여자 현황
         </h2>
@@ -312,13 +312,13 @@ export function WorkoutsView({
       </section>
 
       {/* 내 현황 */}
-      <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-5 mb-6 shadow-lg shadow-black/5">
+      <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-4 sm:p-5 mb-6 shadow-lg shadow-black/5">
         <h2 className="text-base font-semibold text-[hsl(var(--foreground))] mb-4 pb-2 border-b border-[hsl(var(--border))]">
           내 현황
         </h2>
 
         {/* ★ 오늘 운동 기록하기 – 상단에 강조 */}
-        <div className="rounded-xl border border-[hsl(var(--accent))]/30 bg-[hsl(var(--accent))]/5 p-5 mb-5">
+        <div className="rounded-xl border border-[hsl(var(--accent))]/30 bg-[hsl(var(--accent))]/5 p-4 sm:p-5 mb-4 sm:mb-5">
           <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3 flex items-center gap-2">
             <span className="text-[hsl(var(--accent))]">+</span> 오늘 운동 기록하기
           </h3>
@@ -413,7 +413,7 @@ export function WorkoutsView({
           </button>
           {showManual && (
             <div className="mt-3 p-3 rounded-lg bg-[hsl(var(--muted))]/50 space-y-2">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
                   <label className="block text-xs mb-0.5">날짜</label>
                   <input type="date" value={manualDate} onChange={(e) => setManualDate(e.target.value)} className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
@@ -456,18 +456,18 @@ export function WorkoutsView({
           )}
         </div>
 
-      <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] mt-4">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto -mx-4 sm:mx-0 rounded-lg border border-[hsl(var(--border))] mt-4">
+        <table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
-              <th className="text-left p-3 font-medium">참여자</th>
-              <th className="text-left p-3 font-medium">날짜</th>
-              <th className="text-left p-3 font-medium">종목</th>
-              <th className="text-left p-3 font-medium">상세</th>
-              <th className="text-left p-3 font-medium">출석</th>
-              <th className="text-left p-3 font-medium">시작</th>
-              <th className="text-left p-3 font-medium">끝</th>
-              <th className="text-left p-3 font-medium">총 시간</th>
+              <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">참여자</th>
+              <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">날짜</th>
+              <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">종목</th>
+              <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap hidden md:table-cell">상세</th>
+              <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">출석</th>
+              <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">시작</th>
+              <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">끝</th>
+              <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">총 시간</th>
             </tr>
           </thead>
           <tbody>
@@ -480,14 +480,14 @@ export function WorkoutsView({
                   else openEdit(row);
                 }}
               >
-                <td className="p-3">{row.user?.name ?? "—"}</td>
-                <td className="p-3">{row.date}</td>
-                <td className="p-3">{row.workoutType ?? "—"}</td>
-                <td className="p-3 max-w-[180px] truncate text-xs text-[hsl(var(--muted-foreground))]" title={formatDetails(row.details)}>{formatDetails(row.details)}</td>
-                <td className="p-3">{row.attended ? "O" : "X"}</td>
-                <td className="p-3">{row.startTime ?? "—"}</td>
-                <td className="p-3">{row.endTime ?? "—"}</td>
-                <td className="p-3">{calcDuration(row.startTime, row.endTime)}</td>
+                <td className="p-2 sm:p-3">{row.user?.name ?? "—"}</td>
+                <td className="p-2 sm:p-3 whitespace-nowrap">{row.date}</td>
+                <td className="p-2 sm:p-3">{row.workoutType ?? "—"}</td>
+                <td className="p-2 sm:p-3 max-w-[120px] md:max-w-[180px] truncate text-xs text-[hsl(var(--muted-foreground))] hidden md:table-cell" title={formatDetails(row.details)}>{formatDetails(row.details)}</td>
+                <td className="p-2 sm:p-3">{row.attended ? "O" : "X"}</td>
+                <td className="p-2 sm:p-3 whitespace-nowrap">{row.startTime ?? "—"}</td>
+                <td className="p-2 sm:p-3 whitespace-nowrap">{row.endTime ?? "—"}</td>
+                <td className="p-2 sm:p-3 whitespace-nowrap">{calcDuration(row.startTime, row.endTime)}</td>
               </tr>
             ))}
           </tbody>
@@ -509,8 +509,8 @@ export function WorkoutsView({
       )}
 
       {editModal && (
-        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))] p-4 shadow-lg max-w-sm w-full">
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-3 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true">
+          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))] p-4 shadow-lg w-full max-w-[calc(100vw-1.5rem)] sm:max-w-sm my-auto">
             <h3 className="font-semibold mb-3">{editModal.date} 수정</h3>
             <div className="space-y-3">
               <label className="flex items-center gap-2">

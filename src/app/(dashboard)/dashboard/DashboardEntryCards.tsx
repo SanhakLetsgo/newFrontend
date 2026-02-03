@@ -37,24 +37,24 @@ const cards = [
 
 export function DashboardEntryCards() {
   return (
-    <div className="grid gap-5 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-3">
       {cards.map((card) => (
         <Link
           key={card.href}
           href={card.href}
-          className={`group relative block overflow-hidden rounded-2xl border bg-gradient-to-b ${card.gradient} bg-[hsl(var(--card))] p-8 shadow-lg shadow-black/5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${card.border} ${card.hover}`}
+          className={`group relative block overflow-hidden rounded-2xl border bg-gradient-to-b ${card.gradient} bg-[hsl(var(--card))] p-5 sm:p-6 md:p-8 shadow-lg shadow-black/5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:scale-[0.99] ${card.border} ${card.hover}`}
         >
           <div className="flex flex-col items-center text-center">
-            <span className="text-4xl mb-4 drop-shadow-sm" aria-hidden>
+            <span className="text-3xl sm:text-4xl mb-3 sm:mb-4 drop-shadow-sm" aria-hidden>
               {card.icon}
             </span>
-            <h2 className={`text-xl font-semibold text-[hsl(var(--foreground))] mb-1.5 transition-colors ${card.text}`}>
+            <h2 className={`text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))] mb-1 sm:mb-1.5 transition-colors ${card.text}`}>
               {card.title}
             </h2>
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">
+            <p className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))]">
               {card.description}
             </p>
-            <span className="mt-4 text-xs font-medium text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--accent))] transition-colors">
+            <span className="mt-3 sm:mt-4 text-xs font-medium text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--accent))] transition-colors">
               들어가기 →
             </span>
           </div>

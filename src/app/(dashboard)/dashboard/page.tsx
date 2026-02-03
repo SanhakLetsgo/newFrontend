@@ -6,19 +6,19 @@ export default async function DashboardPage() {
   const participantId = await getParticipantId();
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex flex-col justify-center">
-      <div className="space-y-10">
-        <header className="text-center space-y-3">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-[hsl(var(--foreground))] tracking-tight">
+    <div className="min-h-[calc(100vh-8rem)] flex flex-col justify-center px-0 sm:px-2">
+      <div className="space-y-8 sm:space-y-10">
+        <header className="text-center space-y-2 sm:space-y-3 px-1">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[hsl(var(--foreground))] tracking-tight break-keep">
             창민석과 아이들
           </h1>
-          <p className="text-base sm:text-lg text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base md:text-lg text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto leading-relaxed px-1">
             警告(위험한 일을 조심하거나 삼가도록 미리 일러서 주의를 주다.)
           </p>
         </header>
         <h2 className="sr-only">대시보드</h2>
         {!participantId && (
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-6 text-center">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-4 sm:p-6 text-center">
             <p className="text-[hsl(var(--muted-foreground))] mb-4">
               로그인하거나 회원가입하면 운동·논문·창고리즘 기록을 쌓을 수 있어요.
             </p>
