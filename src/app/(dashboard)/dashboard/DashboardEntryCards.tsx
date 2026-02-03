@@ -36,7 +36,7 @@ export function DashboardEntryCards() {
         <Link
           key={card.href}
           href={card.href}
-          className={`group rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 backdrop-blur-sm p-6 shadow-lg shadow-black/10 transition-all hover:scale-[1.02] hover:shadow-xl ${card.hoverBorder}`}
+          className={`group block rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 backdrop-blur-sm p-6 shadow-lg shadow-black/10 transition-all hover:scale-[1.02] hover:shadow-xl cursor-pointer ${card.hoverBorder}`}
         >
           <div className="flex flex-col items-center text-center">
             <span className="text-3xl mb-3" aria-hidden>
