@@ -7,6 +7,8 @@ export function PaperAddForm({ onDone }: { onDone?: () => void } = {}) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [tagsStr, setTagsStr] = useState("");
+  const [authors, setAuthors] = useState<string[]>([]);
+  const [authorInput, setAuthorInput] = useState("");
   const [readAt, setReadAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [mySummary, setMySummary] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -23,6 +25,7 @@ export function PaperAddForm({ onDone }: { onDone?: () => void } = {}) {
         const formData = new FormData();
         formData.set("title", title.trim());
         formData.set("tags", tagsStr);
+        formData.set("authors", authors.join(","));
         formData.set("readAt", readAt);
         if (mySummary.trim()) formData.set("mySummary", mySummary.trim());
         formData.set("pdf", pdfFile);
@@ -47,6 +50,7 @@ export function PaperAddForm({ onDone }: { onDone?: () => void } = {}) {
           body: JSON.stringify({
             title: title.trim(),
             tags: tagsStr.split(",").map((t) => t.trim()).filter(Boolean),
+            authors,
             readAt,
             mySummary: mySummary.trim() || undefined,
           }),
@@ -100,6 +104,57 @@ export function PaperAddForm({ onDone }: { onDone?: () => void } = {}) {
             placeholder="논문 요약, 핵심 내용, 메모 등을 자유롭게 적어주세요"
             className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm"
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">글쓴이 (저자)</label>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={authorInput}
+              onChange={(e) => setAuthorInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const name = authorInput.trim();
+                  if (name && !authors.includes(name)) setAuthors((a) => [...a, name]);
+                  setAuthorInput("");
+                }
+              }}
+              placeholder="저자 이름 입력 후 Enter"
+              className="flex-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const name = authorInput.trim();
+                if (name && !authors.includes(name)) setAuthors((a) => [...a, name]);
+                setAuthorInput("");
+              }}
+              className="rounded-md border border-[hsl(var(--border))] px-3 py-2 text-sm"
+            >
+              추가
+            </button>
+          </div>
+          {authors.length > 0 && (
+            <ul className="flex flex-wrap gap-2">
+              {authors.map((name, i) => (
+                <li
+                  key={`${name}-${i}`}
+                  className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--muted))] px-3 py-1 text-sm"
+                >
+                  {name}
+                  <button
+                    type="button"
+                    onClick={() => setAuthors((a) => a.filter((_, j) => j !== i))}
+                    className="text-red-500 hover:text-red-400 ml-0.5"
+                    aria-label="삭제"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">태그 (쉼표 구분)</label>

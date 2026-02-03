@@ -28,6 +28,7 @@ export async function POST(req: Request) {
     let title: string;
     let url: string | undefined;
     let tags: string[] = [];
+    let authors: string[] = [];
     let readAt: string;
     let mySummary: string | null = null;
     let pdfFile: File | null = null;
@@ -40,6 +41,10 @@ export async function POST(req: Request) {
       const tagsVal = formData.get("tags");
       if (typeof tagsVal === "string") {
         tags = tagsVal.split(",").map((t) => t.trim()).filter(Boolean);
+      }
+      const authorsVal = formData.get("authors");
+      if (typeof authorsVal === "string") {
+        authors = authorsVal.split(",").map((a) => a.trim()).filter(Boolean);
       }
       readAt = ((formData.get("readAt") as string) ?? "").trim() || new Date().toISOString().slice(0, 10);
       const summaryVal = formData.get("mySummary");
@@ -67,6 +72,7 @@ export async function POST(req: Request) {
       title = parsed.data.title;
       url = parsed.data.url || undefined;
       tags = parsed.data.tags ?? [];
+      authors = parsed.data.authors ?? [];
       readAt = parsed.data.readAt;
       mySummary = (parsed.data.mySummary && parsed.data.mySummary.trim()) ? parsed.data.mySummary.trim() : null;
     }
@@ -85,6 +91,7 @@ export async function POST(req: Request) {
         title,
         url: url || null,
         tags,
+        authors,
         readAt,
         mySummary,
       },

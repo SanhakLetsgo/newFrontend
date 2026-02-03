@@ -21,17 +21,13 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const { date } = parsed.data;
-    if (date !== todayStr()) {
-      return NextResponse.json(
-        { error: "오늘 날짜에만 시작할 수 있습니다" },
-        { status: 400 }
-      );
-    }
+    const { date, startTime: clientStartTime, workoutType } = parsed.data;
     const now = new Date();
-    const startTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const startTime =
+      clientStartTime ??
+      `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     const log = await prisma.workoutLog.create({
-      data: { userId: participantId, date, attended: true, startTime },
+      data: { userId: participantId, date, attended: true, startTime, workoutType: workoutType?.trim() || null },
     });
     return NextResponse.json(log);
   } catch (e) {

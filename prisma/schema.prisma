@@ -20,6 +20,23 @@ model User {
   papers        Paper[]
   paperReviews  PaperReview[]
   paperComments PaperComment[]
+  psNotes       PsNote[]
+}
+
+model PsNote {
+  id        String   @id @default(cuid()) @map("_id")
+  userId    String   @map("user_id")
+  date      String
+  content   String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("ps_notes")
 }
 
 model Account {
@@ -60,17 +77,19 @@ model VerificationToken {
 }
 
 model WorkoutLog {
-  id        String   @id @default(cuid()) @map("_id")
-  userId    String   @map("user_id")
-  date      String
-  attended  Boolean  @default(false)
-  startTime String?  @map("start_time")
-  endTime   String?  @map("end_time")
-  createdAt DateTime? @default(now()) @map("created_at")
+  id          String   @id @default(cuid()) @map("_id")
+  userId      String   @map("user_id")
+  date        String
+  attended    Boolean  @default(false)
+  workoutType String?  @map("workout_type")
+  startTime   String?  @map("start_time")
+  endTime     String?  @map("end_time")
+  details     Json?    @map("details")
+  createdAt   DateTime? @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, date])
+  @@index([userId, date])
   @@index([createdAt])
   @@map("workout_logs")
 }
@@ -81,6 +100,7 @@ model Paper {
   title     String
   url       String?
   tags      String[] @default([])
+  authors   String[] @default([])
   readAt    String   @map("read_at")
   pdfPath   String?  @map("pdf_path")
   mySummary String?  @map("my_summary")

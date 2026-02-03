@@ -21,35 +21,27 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const { date } = parsed.data;
-    if (date !== todayStr()) {
-      return NextResponse.json(
-        { error: "오늘 날짜에만 종료할 수 있습니다" },
-        { status: 400 }
-      );
-    }
-    const candidates = await prisma.workoutLog.findMany({
-      where: {
-        userId: participantId,
-        date,
-        startTime: { not: null },
-        endTime: null,
-      },
+    const { date, endTime: clientEndTime, details } = parsed.data;
+    const allForDate = await prisma.workoutLog.findMany({
+      where: { userId: participantId, date, startTime: { not: null } },
     });
+    const candidates = allForDate.filter((log) => log.endTime == null || log.endTime === "");
     const active = candidates.sort(
       (a, b) => (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0)
     )[0];
     if (!active?.startTime) {
       return NextResponse.json(
-        { error: "시작 시간을 먼저 기록하세요" },
+        { error: "시작 시간을 먼저 기록하세요. 운동 시작을 먼저 눌러주세요." },
         { status: 400 }
       );
     }
     const now = new Date();
-    const endTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const endTime =
+      clientEndTime ??
+      `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     const [sh, sm] = active.startTime.split(":").map(Number);
     const [eh, em] = endTime.split(":").map(Number);
-    if (eh < sh || (eh === sh && em <= sm)) {
+    if (eh < sh || (eh === sh && em < sm)) {
       return NextResponse.json(
         { error: "종료 시간은 시작 시간보다 이후여야 합니다" },
         { status: 400 }
@@ -57,7 +49,7 @@ export async function POST(req: Request) {
     }
     const log = await prisma.workoutLog.update({
       where: { id: active.id },
-      data: { endTime },
+      data: { endTime, ...(details != null && Object.keys(details).length > 0 && { details }) },
     });
     return NextResponse.json(log);
   } catch (e) {

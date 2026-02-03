@@ -56,6 +56,7 @@ export async function PATCH(
         ...(parsed.data.title != null && { title: parsed.data.title }),
         ...(parsed.data.url !== undefined && { url: parsed.data.url || null }),
         ...(parsed.data.tags != null && { tags: parsed.data.tags }),
+        ...(parsed.data.authors != null && { authors: parsed.data.authors }),
         ...(parsed.data.readAt != null && { readAt: parsed.data.readAt }),
       },
     });

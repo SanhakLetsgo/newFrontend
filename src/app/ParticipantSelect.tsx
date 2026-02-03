@@ -22,8 +22,9 @@ export function ParticipantSelect() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        router.push("/dashboard");
-        router.refresh();
+        // 전체 페이지 이동으로 쿠키가 다음 요청에 확실히 포함되게 함 (운동/논문에서 재선택 요청 방지)
+        window.location.href = "/dashboard";
+        return;
       } else {
         const msg = typeof data?.error === "string" ? data.error : "선택에 실패했습니다";
         setError(msg);

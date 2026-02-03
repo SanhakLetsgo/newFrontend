@@ -2,17 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 다크 모드 (기본) */
+/* 다크 모드 (기본) – 남색 줄이고 밝은 포인트 추가 */
 :root {
-  --background: 224 71% 4%;
-  --foreground: 213 31% 91%;
-  --border: 216 34% 17%;
+  --background: 220 20% 12%;
+  --foreground: 213 25% 92%;
+  --border: 220 18% 22%;
   --primary: 210 40% 98%;
   --primary-foreground: 222 47% 11%;
-  --muted: 223 47% 11%;
-  --muted-foreground: 215 20% 65%;
-  --card: 224 71% 4%;
-  --card-foreground: 213 31% 91%;
+  --muted: 220 18% 18%;
+  --muted-foreground: 215 18% 68%;
+  --card: 220 18% 16%;
+  --card-foreground: 213 25% 92%;
+  --accent: 199 89% 48%;
+  --accent-foreground: 0 0% 100%;
 }
 
 body {

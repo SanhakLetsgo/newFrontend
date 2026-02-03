@@ -29,16 +29,15 @@ async function main() {
 
   for (let i = 0; i < 7; i++) {
     const date = daysAgo(i);
-    await prisma.workoutLog.upsert({
-      where: { userId_date: { userId: uid, date } },
-      create: {
+    await prisma.workoutLog.create({
+      data: {
         userId: uid,
         date,
         attended: true,
+        workoutType: "러닝",
         startTime: i < 5 ? "07:00" : null,
         endTime: i < 5 ? "07:45" : null,
       },
-      update: {},
     });
   }
   console.log("Created/updated 7 days workout logs");

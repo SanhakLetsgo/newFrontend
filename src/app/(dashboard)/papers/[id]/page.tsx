@@ -22,12 +22,13 @@ export default async function PaperDetailPage({
   });
   if (!paper) notFound();
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Link href="/papers" className="text-sm text-[hsl(var(--muted-foreground))] hover:underline">
-          ← 목록
-        </Link>
-      </div>
+    <div className="space-y-6 max-w-3xl mx-auto">
+      <Link
+        href="/papers"
+        className="inline-flex items-center gap-1.5 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+      >
+        <span aria-hidden>←</span> 목록
+      </Link>
       <PaperDetail paper={paper} />
     </div>
   );

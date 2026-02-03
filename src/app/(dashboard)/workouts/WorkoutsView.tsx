@@ -15,6 +15,22 @@ function calcDuration(start: string | null, end: string | null): string {
   return `${m}분`;
 }
 
+function getClientDate(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function getClientTime(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function formatDetails(d: Record<string, unknown> | null | undefined): string {
+  if (!d || typeof d !== "object") return "—";
+  const parts = Object.entries(d).map(([k, v]) => `${k}: ${v}`);
+  return parts.length ? parts.join(", ") : "—";
+}
+
 type Log = {
   id: string;
   userId: string;
@@ -22,26 +38,64 @@ type Log = {
   attended: boolean;
   startTime: string | null;
   endTime: string | null;
+  workoutType?: string | null;
+  details?: Record<string, unknown> | null;
   user?: { name: string | null };
 };
+
+const TREADMILL_TYPES = ["러닝머신", "러닝", "러닝 머신"];
+
+type ParticipantStat = { userId: string; name: string; weekCount: number };
 
 export function WorkoutsView({
   currentParticipantId,
   todaySessions,
   logs,
+  allParticipantsStats = [],
 }: {
   currentParticipantId: string;
   todaySessions: Log[];
   logs: Log[];
+  allParticipantsStats?: ParticipantStat[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [workoutType, setWorkoutType] = useState("");
+  const [treadmillMinutes, setTreadmillMinutes] = useState("");
+  const [treadmillCalories, setTreadmillCalories] = useState("");
+  const [treadmillDistance, setTreadmillDistance] = useState("");
+  const [customDetails, setCustomDetails] = useState<{ key: string; value: string }[]>([]);
   const [editModal, setEditModal] = useState<Log | null>(null);
   const [editAttended, setEditAttended] = useState(false);
   const [editStart, setEditStart] = useState("");
   const [editEnd, setEditEnd] = useState("");
+  const [editDetails, setEditDetails] = useState<{ key: string; value: string }[]>([]);
+  const [showManual, setShowManual] = useState(false);
+  const [manualDate, setManualDate] = useState(getClientDate());
+  const [manualStart, setManualStart] = useState("");
+  const [manualEnd, setManualEnd] = useState("");
+  const [manualType, setManualType] = useState("");
+  const [manualTreadmillM, setManualTreadmillM] = useState("");
+  const [manualTreadmillC, setManualTreadmillC] = useState("");
+  const [manualTreadmillD, setManualTreadmillD] = useState("");
+  const [manualCustomDetails, setManualCustomDetails] = useState<{ key: string; value: string }[]>([]);
 
   const hasActiveSession = todaySessions.some((s) => s.startTime && !s.endTime);
+
+  function detailsToRows(d: Record<string, unknown> | null | undefined): { key: string; value: string }[] {
+    if (!d || typeof d !== "object") return [];
+    return Object.entries(d).map(([k, v]) => ({ key: k, value: String(v) }));
+  }
+
+  function rowsToDetails(rows: { key: string; value: string }[]): Record<string, string | number> | undefined {
+    const entries = rows.filter((x) => x.key.trim()).map((x) => [x.key.trim(), x.value.trim()] as const);
+    if (entries.length === 0) return undefined;
+    const obj: Record<string, string | number> = {};
+    for (const [k, v] of entries) {
+      obj[k] = Number(v) === Number(v) ? Number(v) : v;
+    }
+    return obj;
+  }
 
   const openEdit = (log: Log) => {
     if (log.userId !== currentParticipantId) return;
@@ -49,12 +103,14 @@ export function WorkoutsView({
     setEditAttended(log.attended);
     setEditStart(log.startTime ?? "");
     setEditEnd(log.endTime ?? "");
+    setEditDetails(detailsToRows(log.details as Record<string, unknown>));
   };
 
   const saveEdit = async () => {
     if (!editModal) return;
     setBusy(true);
     try {
+      const details = rowsToDetails(editDetails);
       const res = await fetch(`/api/workouts/log/${editModal.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -63,6 +119,7 @@ export function WorkoutsView({
           attended: editAttended,
           startTime: editStart.trim() || null,
           endTime: editEnd.trim() || null,
+          ...(details && Object.keys(details).length > 0 && { details }),
         }),
       });
       if (res.ok) {
@@ -96,28 +153,122 @@ export function WorkoutsView({
   const startToday = async () => {
     setBusy(true);
     try {
-      await fetch("/api/workouts/start", {
+      const res = await fetch("/api/workouts/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          date: getClientDate(),
+          startTime: getClientTime(),
+          workoutType: workoutType.trim() || undefined,
+        }),
       });
-      router.refresh();
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error?.message ?? data.error ?? "시작 실패");
+      } else {
+        router.refresh();
+      }
     } finally {
       setBusy(false);
     }
   };
 
+  const buildDetails = (): Record<string, string | number> | undefined => {
+    const isTreadmill = TREADMILL_TYPES.some((t) => workoutType.trim().toLowerCase().includes(t.toLowerCase()));
+    if (isTreadmill) {
+      const d: Record<string, string | number> = {};
+      if (treadmillMinutes.trim()) d["시간(분)"] = Number(treadmillMinutes) || 0;
+      if (treadmillCalories.trim()) d["칼로리(kcal)"] = Number(treadmillCalories) || 0;
+      if (treadmillDistance.trim()) d["거리(km)"] = Number(treadmillDistance) || 0;
+      return Object.keys(d).length ? d : undefined;
+    }
+    const entries = customDetails.filter((x) => x.key.trim()).map((x) => [x.key.trim(), x.value.trim()] as const);
+    if (entries.length === 0) return undefined;
+    const obj: Record<string, string | number> = {};
+    for (const [k, v] of entries) {
+      obj[k] = Number(v) === Number(v) ? Number(v) : v;
+    }
+    return obj;
+  };
+
   const endToday = async () => {
     setBusy(true);
     try {
-      await fetch("/api/workouts/end", {
+      const details = buildDetails();
+      const res = await fetch("/api/workouts/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          date: getClientDate(),
+          endTime: getClientTime(),
+          ...(details && Object.keys(details).length > 0 && { details }),
+        }),
       });
-      router.refresh();
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error?.message ?? data.error ?? "종료 실패");
+      } else {
+        setTreadmillMinutes("");
+        setTreadmillCalories("");
+        setTreadmillDistance("");
+        setCustomDetails([]);
+        router.refresh();
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const buildManualDetails = (): Record<string, string | number> | undefined => {
+    const isTreadmill = TREADMILL_TYPES.some((t) => manualType.trim().toLowerCase().includes(t.toLowerCase()));
+    if (isTreadmill) {
+      const d: Record<string, string | number> = {};
+      if (manualTreadmillM.trim()) d["시간(분)"] = Number(manualTreadmillM) || 0;
+      if (manualTreadmillC.trim()) d["칼로리(kcal)"] = Number(manualTreadmillC) || 0;
+      if (manualTreadmillD.trim()) d["거리(km)"] = Number(manualTreadmillD) || 0;
+      return Object.keys(d).length ? d : undefined;
+    }
+    const entries = manualCustomDetails.filter((x) => x.key.trim()).map((x) => [x.key.trim(), x.value.trim()] as const);
+    if (entries.length === 0) return undefined;
+    const obj: Record<string, string | number> = {};
+    for (const [k, v] of entries) {
+      obj[k] = Number(v) === Number(v) ? Number(v) : v;
+    }
+    return obj;
+  };
+
+  const addManualEntry = async () => {
+    setBusy(true);
+    try {
+      const details = buildManualDetails();
+      const res = await fetch("/api/workouts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          date: manualDate,
+          startTime: manualStart.trim() || null,
+          endTime: manualEnd.trim() || null,
+          workoutType: manualType.trim() || null,
+          ...(details && Object.keys(details).length > 0 && { details }),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error?.message ?? data.error ?? "저장 실패");
+      } else {
+        setShowManual(false);
+        setManualStart("");
+        setManualEnd("");
+        setManualType("");
+        setManualTreadmillM("");
+        setManualTreadmillC("");
+        setManualTreadmillD("");
+        setManualCustomDetails([]);
+        router.refresh();
+      }
     } finally {
       setBusy(false);
     }
@@ -127,8 +278,42 @@ export function WorkoutsView({
 
   return (
     <>
-      <section className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))] p-4 mb-4">
-        <h2 className="text-sm font-semibold mb-2">오늘 기록</h2>
+      {/* 전체 참여자 현황 */}
+      <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-5 mb-8 shadow-lg shadow-black/5">
+        <h2 className="text-base font-semibold text-[hsl(var(--foreground))] mb-4 pb-2 border-b border-[hsl(var(--border))]">
+          전체 참여자 현황
+        </h2>
+        <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4">이번 주 운동 기록</p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {allParticipantsStats.map((p) => (
+            <div
+              key={p.userId}
+              className={`rounded-xl border p-4 ${
+                p.userId === currentParticipantId
+                  ? "border-[hsl(var(--accent))]/50 bg-[hsl(var(--accent))]/10"
+                  : "border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40"
+              }`}
+            >
+              <p className="font-medium text-[hsl(var(--foreground))]">
+                {p.name}
+                {p.userId === currentParticipantId && (
+                  <span className="ml-2 text-xs text-[hsl(var(--accent))]">(나)</span>
+                )}
+              </p>
+              <p className="text-2xl font-bold text-[hsl(var(--accent))] mt-1">{p.weekCount}회</p>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">이번 주</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 내 현황 */}
+      <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/80 p-5 mb-6 shadow-lg shadow-black/5">
+        <h2 className="text-base font-semibold text-[hsl(var(--foreground))] mb-4 pb-2 border-b border-[hsl(var(--border))]">
+          내 현황
+        </h2>
+      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))] p-4 mb-4">
+        <h3 className="text-sm font-semibold mb-2">오늘 기록</h3>
         {todaySessions.length > 0 ? (
           <>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-3">
@@ -148,6 +333,36 @@ export function WorkoutsView({
         ) : (
           <p className="text-sm text-[hsl(var(--muted-foreground))] mb-3">오늘 기록이 없습니다.</p>
         )}
+        <div className="mb-3">
+          <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1">
+            운동 종목 <span className="text-[hsl(var(--accent))]">(시작 전 필수)</span>
+          </label>
+          <input
+            type="text"
+            value={workoutType}
+            onChange={(e) => setWorkoutType(e.target.value)}
+            placeholder="예: 러닝머신, 러닝, 헬스, 수영"
+            className="w-full max-w-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
+          />
+        </div>
+        {TREADMILL_TYPES.some((t) => workoutType.trim().toLowerCase().includes(t.toLowerCase())) ? (
+          <div className="mb-3 p-2 rounded-lg bg-[hsl(var(--muted))]/50 grid grid-cols-3 gap-2">
+            <input type="number" min={0} value={treadmillMinutes} onChange={(e) => setTreadmillMinutes(e.target.value)} placeholder="분" className="rounded border border-[hsl(var(--border))] px-2 py-1 text-sm" />
+            <input type="number" min={0} value={treadmillCalories} onChange={(e) => setTreadmillCalories(e.target.value)} placeholder="kcal" className="rounded border border-[hsl(var(--border))] px-2 py-1 text-sm" />
+            <input type="number" min={0} step={0.1} value={treadmillDistance} onChange={(e) => setTreadmillDistance(e.target.value)} placeholder="km" className="rounded border border-[hsl(var(--border))] px-2 py-1 text-sm" />
+          </div>
+        ) : workoutType.trim() !== "" ? (
+          <div className="mb-3 p-2 rounded-lg bg-[hsl(var(--muted))]/50 space-y-1">
+            {customDetails.map((row, i) => (
+              <div key={i} className="flex gap-1">
+                <input type="text" value={row.key} onChange={(e) => setCustomDetails((p) => p.map((r, j) => (j === i ? { ...r, key: e.target.value } : r)))} placeholder="항목" className="flex-1 rounded border px-2 py-1 text-sm" />
+                <input type="text" value={row.value} onChange={(e) => setCustomDetails((p) => p.map((r, j) => (j === i ? { ...r, value: e.target.value } : r)))} placeholder="값" className="flex-1 rounded border px-2 py-1 text-sm" />
+                <button type="button" onClick={() => setCustomDetails((p) => p.filter((_, j) => j !== i))} className="text-red-400 text-sm">삭제</button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setCustomDetails((p) => [...p, { key: "", value: "" }])} className="text-xs text-[hsl(var(--accent))]">+ 항목 추가</button>
+          </div>
+        ) : null}
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -160,8 +375,9 @@ export function WorkoutsView({
           <button
             type="button"
             onClick={startToday}
-            disabled={busy}
+            disabled={busy || !workoutType.trim()}
             className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--muted))] px-3 py-1.5 text-sm hover:opacity-90 disabled:opacity-50"
+            title={!workoutType.trim() ? "운동 종목을 먼저 입력하세요" : undefined}
           >
             운동 시작
           </button>
@@ -174,14 +390,66 @@ export function WorkoutsView({
             운동 종료
           </button>
         </div>
-      </section>
+        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">시작/종료 버튼으로 재면서 기록하거나, 수동으로 추가할 수 있습니다.</p>
 
-      <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))]">
+        <div className="mt-4 pt-3 border-t border-[hsl(var(--border))]">
+          <button type="button" onClick={() => setShowManual((v) => !v)} className="text-sm text-[hsl(var(--accent))] hover:underline">
+            {showManual ? "수동 입력 접기" : "수동으로 기록 추가"}
+          </button>
+          {showManual && (
+            <div className="mt-3 p-3 rounded-lg bg-[hsl(var(--muted))]/50 space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs mb-0.5">날짜</label>
+                  <input type="date" value={manualDate} onChange={(e) => setManualDate(e.target.value)} className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs mb-0.5">시작 (HH:MM)</label>
+                  <input type="text" value={manualStart} onChange={(e) => setManualStart(e.target.value)} placeholder="09:00" className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs mb-0.5">종료 (HH:MM)</label>
+                  <input type="text" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} placeholder="10:00" className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs mb-0.5">종목</label>
+                <input type="text" value={manualType} onChange={(e) => setManualType(e.target.value)} placeholder="예: 러닝머신, 헬스" className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
+              </div>
+              {TREADMILL_TYPES.some((t) => manualType.trim().toLowerCase().includes(t.toLowerCase())) ? (
+                <div className="grid grid-cols-3 gap-2">
+                  <input type="number" min={0} value={manualTreadmillM} onChange={(e) => setManualTreadmillM(e.target.value)} placeholder="분" className="rounded border px-2 py-1 text-sm" />
+                  <input type="number" min={0} value={manualTreadmillC} onChange={(e) => setManualTreadmillC(e.target.value)} placeholder="kcal" className="rounded border px-2 py-1 text-sm" />
+                  <input type="number" min={0} step={0.1} value={manualTreadmillD} onChange={(e) => setManualTreadmillD(e.target.value)} placeholder="km" className="rounded border px-2 py-1 text-sm" />
+                </div>
+              ) : manualType.trim() !== "" ? (
+                <div className="space-y-1">
+                  {manualCustomDetails.map((row, i) => (
+                    <div key={i} className="flex gap-1">
+                      <input type="text" value={row.key} onChange={(e) => setManualCustomDetails((p) => p.map((r, j) => (j === i ? { ...r, key: e.target.value } : r)))} placeholder="항목" className="flex-1 rounded border px-2 py-1 text-sm" />
+                      <input type="text" value={row.value} onChange={(e) => setManualCustomDetails((p) => p.map((r, j) => (j === i ? { ...r, value: e.target.value } : r)))} placeholder="값" className="flex-1 rounded border px-2 py-1 text-sm" />
+                      <button type="button" onClick={() => setManualCustomDetails((p) => p.filter((_, j) => j !== i))} className="text-red-400 text-sm">삭제</button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => setManualCustomDetails((p) => [...p, { key: "", value: "" }])} className="text-xs text-[hsl(var(--accent))]">+ 항목 추가</button>
+                </div>
+              ) : null}
+              <button type="button" onClick={addManualEntry} disabled={busy} className="rounded-md border border-[hsl(var(--accent))]/50 bg-[hsl(var(--accent))]/10 text-[hsl(var(--accent))] px-3 py-1.5 text-sm hover:bg-[hsl(var(--accent))]/20 disabled:opacity-50">
+                기록 추가
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] mt-4">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
               <th className="text-left p-3 font-medium">참여자</th>
               <th className="text-left p-3 font-medium">날짜</th>
+              <th className="text-left p-3 font-medium">종목</th>
+              <th className="text-left p-3 font-medium">상세</th>
               <th className="text-left p-3 font-medium">출석</th>
               <th className="text-left p-3 font-medium">시작</th>
               <th className="text-left p-3 font-medium">끝</th>
@@ -197,6 +465,8 @@ export function WorkoutsView({
               >
                 <td className="p-3">{row.user?.name ?? "—"}</td>
                 <td className="p-3">{row.date}</td>
+                <td className="p-3">{row.workoutType ?? "—"}</td>
+                <td className="p-3 max-w-[180px] truncate text-xs text-[hsl(var(--muted-foreground))]" title={formatDetails(row.details as Record<string, unknown>)}>{formatDetails(row.details as Record<string, unknown>)}</td>
                 <td className="p-3">{row.attended ? "O" : "X"}</td>
                 <td className="p-3">{row.startTime ?? "—"}</td>
                 <td className="p-3">{row.endTime ?? "—"}</td>
@@ -206,6 +476,7 @@ export function WorkoutsView({
           </tbody>
         </table>
       </div>
+      </section>
 
       {editModal && (
         <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
@@ -239,6 +510,49 @@ export function WorkoutsView({
                   placeholder="10:00"
                   className="w-full rounded-md border border-[hsl(var(--border))] px-3 py-2 text-sm"
                 />
+              </div>
+              <div>
+                <label className="block text-sm mb-1 text-[hsl(var(--muted-foreground))]">상세 기록 (선택)</label>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mb-2">예: 시간(분), 칼로리(kcal), 거리(km), 세트, 무게 등</p>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {editDetails.map((row, i) => (
+                    <div key={i} className="flex gap-1 items-center">
+                      <input
+                        type="text"
+                        value={row.key}
+                        onChange={(e) =>
+                          setEditDetails((p) => p.map((r, j) => (j === i ? { ...r, key: e.target.value } : r)))
+                        }
+                        placeholder="항목명"
+                        className="flex-1 rounded border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-2 py-1.5 text-sm"
+                      />
+                      <input
+                        type="text"
+                        value={row.value}
+                        onChange={(e) =>
+                          setEditDetails((p) => p.map((r, j) => (j === i ? { ...r, value: e.target.value } : r)))
+                        }
+                        placeholder="값"
+                        className="flex-1 rounded border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-2 py-1.5 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setEditDetails((p) => p.filter((_, j) => j !== i))}
+                        className="text-red-400 hover:text-red-300 text-sm px-1"
+                        aria-label="삭제"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditDetails((p) => [...p, { key: "", value: "" }])}
+                  className="mt-1 text-xs text-[hsl(var(--accent))] hover:underline"
+                >
+                  + 항목 추가
+                </button>
               </div>
             </div>
             <div className="flex gap-2 justify-end mt-4">
