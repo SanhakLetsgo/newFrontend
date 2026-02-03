@@ -14,8 +14,10 @@ export type PsCodePost = {
   userId: string;
   kind: "solution" | "feedback";
   title: string | null;
+  author: string | null;
   code: string;
   language: string;
+  question: string | null;
   createdAt: string;
   user?: { id: string; name: string | null };
 };

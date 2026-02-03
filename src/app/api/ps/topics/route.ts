@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getParticipantId } from "@/lib/participant";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 import { psTopicBody } from "@/lib/validations";
 
 export async function GET() {
@@ -8,7 +8,7 @@ export async function GET() {
   if (!participantId) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
-  const topics = await prisma.psTopic.findMany({
+  const topics = await db.psTopic.findMany({
     orderBy: { createdAt: "desc" },
     include: {
       user: { select: { id: true, name: true } },
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const topic = await prisma.psTopic.create({
+    const topic = await db.psTopic.create({
       data: {
         userId: participantId,
         title: parsed.data.title,

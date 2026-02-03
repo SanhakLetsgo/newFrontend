@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getParticipantId } from "@/lib/participant";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 import { psCodePostBody } from "@/lib/validations";
 
 export async function POST(req: Request) {
@@ -17,20 +17,22 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const topic = await prisma.psTopic.findUnique({
+    const topic = await db.psTopic.findUnique({
       where: { id: parsed.data.topicId },
     });
     if (!topic) {
       return NextResponse.json({ error: "주제를 찾을 수 없습니다." }, { status: 404 });
     }
-    const post = await prisma.psCodePost.create({
+    const post = await db.psCodePost.create({
       data: {
         topicId: parsed.data.topicId,
         userId: participantId,
         kind: parsed.data.kind,
         title: parsed.data.title ?? null,
+        author: parsed.data.author?.trim() || null,
         code: parsed.data.code,
         language: parsed.data.language,
+        question: parsed.data.question?.trim() || null,
       },
       include: { user: { select: { id: true, name: true } } },
     });

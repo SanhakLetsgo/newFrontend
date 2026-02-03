@@ -72,6 +72,15 @@ export const psCodePostBody = z.object({
   topicId: z.string().min(1, "주제를 선택하세요"),
   kind: z.enum(["solution", "feedback"]),
   title: z.string().max(200).optional(),
+  author: z.string().max(100).optional(),
   code: z.string().max(100000),
   language: z.string().max(50).default("javascript"),
+  question: z.string().max(5000).optional(),
+});
+
+/** 창고리즘 코드 포스트 댓글 */
+export const psCodePostCommentBody = z.object({
+  content: z.string().min(1, "댓글을 입력하세요").max(2000),
+  code: z.string().max(50000).optional(),
+  language: z.string().max(50).optional(),
 });

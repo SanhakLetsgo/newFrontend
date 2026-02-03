@@ -99,6 +99,8 @@ export default async function PSPage() {
     _count: t._count,
   }));
 
+  const hasAnyParticipant = allParticipantsStats.some((p: ParticipantStat) => p.weekCount > 0);
+
   return (
     <div className="space-y-8">
       <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">창고리즘 (PS 스터디)</h1>
@@ -108,34 +110,36 @@ export default async function PSPage() {
         <PSTopicsView initialTopics={initialTopics} />
       </div>
 
-      {/* 전체 참여자 현황 (다크 카드) */}
-      <section className="rounded-2xl border border-white/10 bg-zinc-900/80 p-5 shadow-xl">
-        <h2 className="text-base font-semibold text-zinc-200 mb-4 pb-2 border-b border-white/10">
-          전체 참여자 현황
-        </h2>
-        <p className="text-sm text-zinc-500 mb-4">이번 주 정리 노트</p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {allParticipantsStats.map((p: ParticipantStat) => (
-            <div
-              key={p.userId}
-              className={`rounded-xl border p-4 ${
-                p.userId === participantId
-                  ? "border-amber-500/50 bg-amber-500/10"
-                  : "border-white/10 bg-zinc-800/50"
-              }`}
-            >
-              <p className="font-medium text-zinc-100">
-                {p.name}
-                {p.userId === participantId && (
-                  <span className="ml-2 text-xs text-amber-400">(나)</span>
-                )}
-              </p>
-              <p className="text-2xl font-bold text-amber-400 mt-1">{p.weekCount}일</p>
-              <p className="text-xs text-zinc-500">이번 주</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* 전체 참여자 현황 (다크 카드) - 이번 주 작성자가 있을 때만 표시 */}
+      {hasAnyParticipant && (
+        <section className="rounded-2xl border border-white/10 bg-zinc-900/80 p-5 shadow-xl">
+          <h2 className="text-base font-semibold text-zinc-200 mb-4 pb-2 border-b border-white/10">
+            전체 참여자 현황
+          </h2>
+          <p className="text-sm text-zinc-500 mb-4">이번 주 정리 노트</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {allParticipantsStats.map((p: ParticipantStat) => (
+              <div
+                key={p.userId}
+                className={`rounded-xl border p-4 ${
+                  p.userId === participantId
+                    ? "border-amber-500/50 bg-amber-500/10"
+                    : "border-white/10 bg-zinc-800/50"
+                }`}
+              >
+                <p className="font-medium text-zinc-100">
+                  {p.name}
+                  {p.userId === participantId && (
+                    <span className="ml-2 text-xs text-amber-400">(나)</span>
+                  )}
+                </p>
+                <p className="text-2xl font-bold text-amber-400 mt-1">{p.weekCount}일</p>
+                <p className="text-xs text-zinc-500">이번 주</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 내 현황 - 일일 노트 */}
       <section className="rounded-2xl border border-white/10 bg-zinc-900/80 p-5 shadow-xl">

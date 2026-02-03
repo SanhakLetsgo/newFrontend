@@ -20,9 +20,10 @@ model User {
   papers        Paper[]
   paperReviews  PaperReview[]
   paperComments PaperComment[]
-  psNotes       PsNote[]
-  psTopics      PsTopic[]
-  psCodePosts   PsCodePost[]
+  psNotes             PsNote[]
+  psTopics            PsTopic[]
+  psCodePosts         PsCodePost[]
+  psCodePostComments  PsCodePostComment[]
 }
 
 model PsNote {
@@ -61,16 +62,36 @@ model PsCodePost {
   userId    String   @map("user_id")
   kind      String   // "solution" | "feedback"
   title     String?  @map("title")
+  author    String?  @map("author")
   code      String
   language  String   @default("javascript") @map("language")
+  question  String?  @map("question")
   createdAt DateTime @default(now()) @map("created_at")
 
-  topic PsTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic    PsTopic            @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments PsCodePostComment[]
 
   @@index([topicId])
   @@index([userId])
   @@map("ps_code_posts")
+}
+
+model PsCodePostComment {
+  id         String   @id @default(cuid()) @map("_id")
+  codePostId String   @map("code_post_id")
+  userId     String   @map("user_id")
+  content    String
+  code       String?  @map("code")
+  language   String?  @default("javascript") @map("language")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  codePost PsCodePost @relation(fields: [codePostId], references: [id], onDelete: Cascade)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([codePostId])
+  @@index([userId])
+  @@map("ps_code_post_comments")
 }
 
 model Account {

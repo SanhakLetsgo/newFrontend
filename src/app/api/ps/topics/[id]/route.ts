@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getParticipantId } from "@/lib/participant";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 import { psTopicBody } from "@/lib/validations";
 
 type Params = { params: Promise<{ id: string }> };
@@ -11,7 +11,7 @@ export async function GET(_req: Request, { params }: Params) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
   const { id } = await params;
-  const topic = await prisma.psTopic.findUnique({
+  const topic = await db.psTopic.findUnique({
     where: { id },
     include: {
       user: { select: { id: true, name: true } },
@@ -25,13 +25,15 @@ export async function GET(_req: Request, { params }: Params) {
   return NextResponse.json(topic);
 }
 
+type TopicRow = { userId: string };
+
 export async function PATCH(req: Request, { params }: Params) {
   const participantId = await getParticipantId();
   if (!participantId) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
   const { id } = await params;
-  const topic = await prisma.psTopic.findUnique({ where: { id } });
+  const topic = await db.psTopic.findUnique({ where: { id } }) as TopicRow | null;
   if (!topic) return NextResponse.json({ error: "주제를 찾을 수 없습니다." }, { status: 404 });
   if (topic.userId !== participantId) {
     return NextResponse.json({ error: "수정 권한이 없습니다." }, { status: 403 });
@@ -45,7 +47,7 @@ export async function PATCH(req: Request, { params }: Params) {
         { status: 400 }
       );
     }
-    const updated = await prisma.psTopic.update({
+    const updated = await db.psTopic.update({
       where: { id },
       data: parsed.data,
       include: {
@@ -66,11 +68,11 @@ export async function DELETE(_req: Request, { params }: Params) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
   const { id } = await params;
-  const topic = await prisma.psTopic.findUnique({ where: { id } });
+  const topic = await db.psTopic.findUnique({ where: { id } }) as TopicRow | null;
   if (!topic) return NextResponse.json({ error: "주제를 찾을 수 없습니다." }, { status: 404 });
   if (topic.userId !== participantId) {
     return NextResponse.json({ error: "삭제 권한이 없습니다." }, { status: 403 });
   }
-  await prisma.psTopic.delete({ where: { id } });
+  await db.psTopic.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

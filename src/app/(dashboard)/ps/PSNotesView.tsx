@@ -30,6 +30,32 @@ export function PSNotesView({ initialNotes }: { initialNotes: PSNote[] }) {
     else setContent("");
   }, [selectedDate, noteForDate]);
 
+  const deleteNote = async (noteId: string, noteDate: string) => {
+    if (!confirm("이 노트를 삭제할까요?")) return;
+    setError(null);
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/ps/notes/${noteId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setNotes((prev) => prev.filter((n) => n.id !== noteId));
+        if (selectedDate === noteDate) {
+          setContent("");
+        }
+        router.refresh();
+      } else {
+        const data = await res.json();
+        setError(typeof data.error === "string" ? data.error : "삭제 실패");
+      }
+    } catch {
+      setError("연결 실패");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const save = async () => {
     setError(null);
     setBusy(true);
@@ -107,16 +133,26 @@ export function PSNotesView({ initialNotes }: { initialNotes: PSNote[] }) {
                 <p className="text-sm text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap line-clamp-4">
                   {n.content || "(비어 있음)"}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedDate(n.date);
-                    setContent(n.content);
-                  }}
-                  className="mt-2 text-xs text-[hsl(var(--accent))] hover:underline"
-                >
-                  이 날짜로 편집
-                </button>
+                <div className="mt-2 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(n.date);
+                      setContent(n.content);
+                    }}
+                    className="text-xs text-[hsl(var(--accent))] hover:underline"
+                  >
+                    이 날짜로 편집
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteNote(n.id, n.date)}
+                    disabled={busy}
+                    className="text-xs text-red-500 hover:text-red-400 disabled:opacity-50"
+                  >
+                    삭제
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

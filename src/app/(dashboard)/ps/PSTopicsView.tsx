@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { PSCodeEditor } from "./PSCodeEditor";
-import type { PsTopic, PsCodePost } from "./ps-types";
+import { PSCodeViewModal } from "./PSCodeViewModal";
+import type { PsTopic, PsCodePost } from "@/app/(dashboard)/ps/ps-types";
 
 export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
   const router = useRouter();
@@ -20,9 +21,12 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
     topicId: string;
     kind: "solution" | "feedback";
   } | null>(null);
+  const [editingPost, setEditingPost] = useState<PsCodePost | null>(null);
   const [codeTitle, setCodeTitle] = useState("");
+  const [codeAuthor, setCodeAuthor] = useState("");
   const [codeBody, setCodeBody] = useState("");
   const [codeLang, setCodeLang] = useState("javascript");
+  const [codeQuestion, setCodeQuestion] = useState("");
 
   const fetchCodeForTopic = useCallback(async (topicId: string) => {
     const res = await fetch(`/api/ps/topics/${topicId}/code`, { credentials: "include" });
@@ -69,7 +73,7 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
   };
 
   const deleteTopic = async (id: string) => {
-    if (!confirm("이 주제와 안의 모든 코드를 삭제할까요?")) return;
+    if (!confirm("정말로 이 주제(수업노트)와 안의 모든 코드를 삭제하시겠습니까?\n되돌릴 수 없습니다.")) return;
     const res = await fetch(`/api/ps/topics/${id}`, { method: "DELETE", credentials: "include" });
     if (res.ok) {
       setTopics((prev) => prev.filter((t) => t.id !== id));
@@ -83,37 +87,84 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
     }
   };
 
+  const openEdit = useCallback((post: PsCodePost) => {
+    setAddingCode(null);
+    setEditingPost(post);
+    setCodeTitle(post.title ?? "");
+    setCodeAuthor(post.author ?? "");
+    setCodeBody(post.code);
+    setCodeLang(post.language);
+    setCodeQuestion(post.question ?? "");
+  }, []);
+
   const submitCode = async () => {
-    if (!addingCode || !codeBody.trim()) return;
+    const isEdit = editingPost != null;
+    if (!isEdit && !addingCode) return;
+    if (!codeBody.trim()) return;
     setError(null);
     setBusy(true);
     try {
-      const res = await fetch("/api/ps/code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          topicId: addingCode.topicId,
-          kind: addingCode.kind,
-          title: codeTitle.trim() || undefined,
-          code: codeBody,
-          language: codeLang,
-        }),
-      });
-      if (res.ok) {
-        const post = await res.json();
-        setCodeByTopic((prev) => ({
-          ...prev,
-          [addingCode.topicId]: [post, ...(prev[addingCode.topicId] ?? [])],
-        }));
-        setAddingCode(null);
-        setCodeTitle("");
-        setCodeBody("");
-        setCodeLang("javascript");
-        router.refresh();
-      } else {
-        const data = await res.json();
-        setError(typeof data.error === "string" ? data.error : "저장 실패");
+      const body = {
+        title: codeTitle.trim() || undefined,
+        author: codeAuthor.trim() || undefined,
+        code: codeBody,
+        language: codeLang,
+        question: codeQuestion.trim() || undefined,
+      };
+      if (isEdit) {
+        const res = await fetch(`/api/ps/code/${editingPost.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(body),
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setCodeByTopic((prev) => ({
+            ...prev,
+            [editingPost.topicId]: (prev[editingPost.topicId] ?? []).map((p) =>
+              p.id === editingPost.id ? updated : p
+            ),
+          }));
+          setEditingPost(null);
+          setCodeTitle("");
+          setCodeAuthor("");
+          setCodeBody("");
+          setCodeLang("javascript");
+          setCodeQuestion("");
+          router.refresh();
+        } else {
+          const data = await res.json();
+          setError(typeof data.error === "string" ? data.error : "수정 실패");
+        }
+      } else if (addingCode) {
+        const res = await fetch("/api/ps/code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            topicId: addingCode.topicId,
+            kind: addingCode.kind,
+            ...body,
+          }),
+        });
+        if (res.ok) {
+          const post = await res.json();
+          setCodeByTopic((prev) => ({
+            ...prev,
+            [addingCode.topicId]: [post, ...(prev[addingCode.topicId] ?? [])],
+          }));
+          setAddingCode(null);
+          setCodeTitle("");
+          setCodeAuthor("");
+          setCodeBody("");
+          setCodeLang("javascript");
+          setCodeQuestion("");
+          router.refresh();
+        } else {
+          const data = await res.json();
+          setError(typeof data.error === "string" ? data.error : "저장 실패");
+        }
       }
     } catch {
       setError("연결 실패");
@@ -136,6 +187,7 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
 
   const solutions = (topicId: string) => (codeByTopic[topicId] ?? []).filter((p) => p.kind === "solution");
   const feedbacks = (topicId: string) => (codeByTopic[topicId] ?? []).filter((p) => p.kind === "feedback");
+  const [viewFullPost, setViewFullPost] = useState<PsCodePost | null>(null);
 
   return (
     <div className="space-y-6">
@@ -207,24 +259,31 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
               key={topic.id}
               className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 shadow-xl"
             >
-              <button
-                type="button"
-                onClick={() => openTopic(topic.id)}
-                className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-white/5"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-zinc-500">
+              <div className="flex w-full items-center justify-between gap-2 px-5 py-4">
+                <button
+                  type="button"
+                  onClick={() => openTopic(topic.id)}
+                  className="flex flex-1 items-center gap-3 text-left transition-colors hover:bg-white/5 rounded-lg -m-1 p-1 min-w-0"
+                >
+                  <span className="text-zinc-500 shrink-0">
                     {expandedId === topic.id ? "▼" : "▶"}
                   </span>
-                  <span className="font-medium text-zinc-100">{topic.title}</span>
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-zinc-400">
+                  <span className="font-medium text-zinc-100 truncate">{topic.title}</span>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-zinc-400 shrink-0">
                     {topic.kind === "lesson" ? "수업노트" : "주제"}
                   </span>
-                </div>
-                <span className="text-sm text-zinc-500">
-                  코드 {(topic as PsTopic & { _count?: { codePosts: number } })._count?.codePosts ?? 0}개
-                </span>
-              </button>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteTopic(topic.id);
+                  }}
+                  className="shrink-0 text-xs text-zinc-500 hover:text-red-400 transition-colors py-1 px-2"
+                >
+                  삭제
+                </button>
+              </div>
 
               {expandedId === topic.id && (
                 <div className="border-t border-white/10 bg-zinc-950/50 p-5">
@@ -235,7 +294,11 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
                     topicId={topic.id}
                     posts={solutions(topic.id)}
                     kind="solution"
-                    onAdd={() => setAddingCode({ topicId: topic.id, kind: "solution" })}
+                    onAdd={() => {
+                      setEditingPost(null);
+                      setAddingCode({ topicId: topic.id, kind: "solution" });
+                    }}
+                    onEdit={openEdit}
                     onDelete={(postId) => deleteCode(postId, topic.id)}
                   />
                   {/* 피드백 원하는 코드 */}
@@ -245,34 +308,76 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
                     topicId={topic.id}
                     posts={feedbacks(topic.id)}
                     kind="feedback"
-                    onAdd={() => setAddingCode({ topicId: topic.id, kind: "feedback" })}
+                    onAdd={() => {
+                      setEditingPost(null);
+                      setAddingCode({ topicId: topic.id, kind: "feedback" });
+                    }}
+                    onEdit={openEdit}
                     onDelete={(postId) => deleteCode(postId, topic.id)}
+                    onViewFull={setViewFullPost}
                   />
 
-                  {addingCode?.topicId === topic.id && (
+                  {(addingCode != null && addingCode.topicId === topic.id) ||
+                  (editingPost != null && editingPost.topicId === topic.id) ? (
                     <div className="mt-8 rounded-2xl border border-amber-500/20 bg-zinc-900/80 p-5">
                       <h4 className="mb-4 text-sm font-semibold text-amber-400/90">
-                        {addingCode.kind === "solution" ? "정답 코드" : "피드백 요청"} 작성
+                        {editingPost
+                          ? editingPost.kind === "solution"
+                            ? "정답 코드 수정"
+                            : "피드백 코드 수정"
+                          : addingCode!.kind === "solution"
+                            ? "정답 코드 작성"
+                            : "피드백 요청 작성"}
                       </h4>
-                      <input
-                        type="text"
-                        value={codeTitle}
-                        onChange={(e) => setCodeTitle(e.target.value)}
-                        placeholder="제목 (선택)"
-                        className="mb-4 w-full max-w-md rounded-lg border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500"
-                      />
+                      <div className="mb-4 flex flex-wrap gap-4">
+                        <div className="min-w-[200px] flex-1">
+                          <label className="mb-1 block text-xs text-zinc-500">제목 (선택)</label>
+                          <input
+                            type="text"
+                            value={codeTitle}
+                            onChange={(e) => setCodeTitle(e.target.value)}
+                            placeholder="제목을 입력하세요"
+                            className="w-full rounded-lg border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-amber-500/50 focus:outline-none"
+                          />
+                        </div>
+                        <div className="min-w-[160px]">
+                          <label className="mb-1 block text-xs text-zinc-500">작성자 (선택)</label>
+                          <input
+                            type="text"
+                            value={codeAuthor}
+                            onChange={(e) => setCodeAuthor(e.target.value)}
+                            placeholder="이름 또는 닉네임"
+                            className="w-full rounded-lg border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-amber-500/50 focus:outline-none"
+                          />
+                        </div>
+                      </div>
                       <div className="mb-4">
+                        <label className="mb-1 block text-xs text-zinc-500">코드</label>
                         <PSCodeEditor
                           value={codeBody}
                           onChange={setCodeBody}
                           language={codeLang}
                           onLanguageChange={setCodeLang}
                           placeholder={
-                            addingCode.kind === "solution"
-                              ? "// 정답 코드를 붙여넣거나 작성하세요"
-                              : "// 피드백 받고 싶은 코드를 올려주세요"
+                            editingPost
+                              ? "// 코드를 수정하세요"
+                              : addingCode != null && addingCode.kind === "solution"
+                                ? "// 정답 코드를 붙여넣거나 작성하세요"
+                                : "// 피드백 받고 싶은 코드를 올려주세요"
                           }
                           minHeight="280px"
+                        />
+                      </div>
+                      <div className="mb-4">
+                        <label className="mb-1 block text-xs text-zinc-500">
+                          코드 아래 추가 질문 (선택)
+                        </label>
+                        <textarea
+                          value={codeQuestion}
+                          onChange={(e) => setCodeQuestion(e.target.value)}
+                          placeholder="피드백 받고 싶은 점, 궁금한 점 등을 적어주세요"
+                          rows={3}
+                          className="w-full rounded-lg border border-white/10 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-amber-500/50 focus:outline-none resize-y min-h-[80px]"
                         />
                       </div>
                       {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
@@ -283,14 +388,23 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
                           disabled={busy || !codeBody.trim()}
                           className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-amber-400 disabled:opacity-50"
                         >
-                          {busy ? "올리는 중…" : "올리기"}
+                          {busy
+                            ? editingPost
+                              ? "수정 중…"
+                              : "올리는 중…"
+                            : editingPost
+                              ? "수정 완료"
+                              : "올리기"}
                         </button>
                         <button
                           type="button"
                           onClick={() => {
                             setAddingCode(null);
+                            setEditingPost(null);
                             setCodeTitle("");
+                            setCodeAuthor("");
                             setCodeBody("");
+                            setCodeQuestion("");
                             setError(null);
                           }}
                           className="rounded-lg border border-white/20 px-4 py-2 text-sm text-zinc-400 hover:bg-white/5"
@@ -299,25 +413,17 @@ export function PSTopicsView({ initialTopics }: { initialTopics: PsTopic[] }) {
                         </button>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
-
-              {expandedId === topic.id && (
-                <div className="border-t border-white/10 px-5 pb-3 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => deleteTopic(topic.id)}
-                    className="text-xs text-zinc-500 hover:text-red-400"
-                  >
-                    주제 삭제
-                  </button>
+                  ) : null}
                 </div>
               )}
             </div>
           ))
         )}
       </div>
+
+      {viewFullPost != null && (
+        <PSCodeViewModal post={viewFullPost} onClose={() => setViewFullPost(null)} />
+      )}
     </div>
   );
 }
@@ -329,7 +435,9 @@ function Section({
   posts,
   kind,
   onAdd,
+  onEdit,
   onDelete,
+  onViewFull,
 }: {
   title: string;
   subtitle: string;
@@ -337,7 +445,9 @@ function Section({
   posts: PsCodePost[];
   kind: "solution" | "feedback";
   onAdd: () => void;
+  onEdit?: (post: PsCodePost) => void;
   onDelete: (postId: string) => void;
+  onViewFull?: (post: PsCodePost) => void;
 }) {
   return (
     <div className="mb-8 last:mb-0">
@@ -366,9 +476,9 @@ function Section({
               className="rounded-xl border border-white/10 bg-zinc-900/60 overflow-hidden"
             >
               <div className="flex items-center justify-between border-b border-white/10 bg-zinc-800/50 px-4 py-2">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-sm font-medium text-zinc-300">
-                    {post.user?.name ?? "이름 없음"}
+                    {(post.author?.trim() || post.user?.name) ?? "이름 없음"}
                   </span>
                   {post.title && (
                     <span className="text-xs text-zinc-500">{post.title}</span>
@@ -377,13 +487,33 @@ function Section({
                     {post.language}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onDelete(post.id)}
-                  className="text-xs text-zinc-500 hover:text-red-400"
-                >
-                  삭제
-                </button>
+                <div className="flex items-center gap-2">
+                  {onEdit && (
+                    <button
+                      type="button"
+                      onClick={() => onEdit(post)}
+                      className="text-xs text-amber-400 hover:text-amber-300"
+                    >
+                      수정
+                    </button>
+                  )}
+                  {kind === "feedback" && onViewFull && (
+                    <button
+                      type="button"
+                      onClick={() => onViewFull(post)}
+                      className="text-xs text-amber-400 hover:text-amber-300"
+                    >
+                      전체보기
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onDelete(post.id)}
+                    className="text-xs text-zinc-500 hover:text-red-400"
+                  >
+                    삭제
+                  </button>
+                </div>
               </div>
               <div className="p-2">
                 <PSCodeEditor
@@ -393,6 +523,12 @@ function Section({
                   minHeight="120px"
                 />
               </div>
+              {post.question?.trim() && (
+                <div className="border-t border-white/10 px-4 py-3 bg-zinc-800/30">
+                  <p className="text-xs text-zinc-500 mb-1">추가 질문</p>
+                  <p className="text-sm text-zinc-300 whitespace-pre-wrap">{post.question.trim()}</p>
+                </div>
+              )}
             </li>
           ))}
         </ul>

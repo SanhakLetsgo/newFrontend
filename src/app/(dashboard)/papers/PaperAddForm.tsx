@@ -7,7 +7,6 @@ type PaperAddFormProps = { onDone?: () => void };
 export function PaperAddForm({ onDone }: PaperAddFormProps = {}) {
   const router = useRouter();
   const [title, setTitle] = useState("");
-  const [tagsStr, setTagsStr] = useState("");
   const [authors, setAuthors] = useState<string[]>([]);
   const [authorInput, setAuthorInput] = useState("");
   const [readAt, setReadAt] = useState(() => new Date().toISOString().slice(0, 10));
@@ -25,7 +24,6 @@ export function PaperAddForm({ onDone }: PaperAddFormProps = {}) {
       if (hasFile) {
         const formData = new FormData();
         formData.set("title", title.trim());
-        formData.set("tags", tagsStr);
         formData.set("authors", authors.join(","));
         formData.set("readAt", readAt);
         if (mySummary.trim()) formData.set("mySummary", mySummary.trim());
@@ -50,7 +48,6 @@ export function PaperAddForm({ onDone }: PaperAddFormProps = {}) {
           credentials: "include",
           body: JSON.stringify({
             title: title.trim(),
-            tags: tagsStr.split(",").map((t) => t.trim()).filter(Boolean),
             authors,
             readAt,
             mySummary: mySummary.trim() || undefined,
@@ -156,16 +153,6 @@ export function PaperAddForm({ onDone }: PaperAddFormProps = {}) {
               ))}
             </ul>
           )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">태그 (쉼표 구분)</label>
-          <input
-            type="text"
-            value={tagsStr}
-            onChange={(e) => setTagsStr(e.target.value)}
-            placeholder="NLP, BERT"
-            className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm"
-          />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">읽은 날짜</label>
