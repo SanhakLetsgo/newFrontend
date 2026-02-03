@@ -82,7 +82,7 @@ export function PSCodeViewModal({
       aria-labelledby="code-view-modal-title"
     >
       <div
-        className="relative flex flex-col w-full max-w-[calc(100vw-1.5rem)] sm:max-w-4xl max-h-[90dvh] rounded-2xl border border-white/20 bg-zinc-900 shadow-2xl overflow-hidden my-auto"
+        className="relative flex flex-col w-full max-w-[calc(100vw-1.5rem)] sm:max-w-4xl min-h-[85dvh] max-h-[95dvh] rounded-2xl border border-white/20 bg-zinc-900 shadow-2xl overflow-hidden my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between shrink-0 border-b border-white/10 bg-zinc-800/80 px-5 py-3">
@@ -117,7 +117,7 @@ export function PSCodeViewModal({
                 value={post.code}
                 readOnly
                 language={post.language}
-                minHeight="320px"
+                minHeight="560px"
               />
             </div>
             {post.question?.trim() && (
