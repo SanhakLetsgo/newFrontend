@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getParticipantId } from "@/lib/participant";
 import { prisma } from "@/lib/prisma";
 import { PSNotesView } from "./PSNotesView";
@@ -35,7 +36,7 @@ function getWeekRange() {
 
 export default async function PSPage() {
   const participantId = await getParticipantId();
-  if (!participantId) return null;
+  if (!participantId) redirect("/login");
 
   const today = new Date().toISOString().slice(0, 10);
   const from = new Date();
@@ -102,17 +103,17 @@ export default async function PSPage() {
   const hasAnyParticipant = allParticipantsStats.some((p: ParticipantStat) => p.weekCount > 0);
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">창고리즘 (PS 스터디)</h1>
+    <div className="space-y-6 sm:space-y-8">
+      <h1 className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))]">창고리즘 (PS 스터디)</h1>
 
       {/* 주제·수업노트 + 코드 (다크 테마) */}
-      <div className="rounded-3xl border border-white/10 bg-zinc-950/90 p-6 shadow-2xl shadow-black/30 sm:p-8">
+      <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-zinc-950/90 p-4 sm:p-6 md:p-8 shadow-2xl shadow-black/30">
         <PSTopicsView initialTopics={initialTopics} />
       </div>
 
       {/* 전체 참여자 현황 (다크 카드) - 이번 주 작성자가 있을 때만 표시 */}
       {hasAnyParticipant && (
-        <section className="rounded-2xl border border-white/10 bg-zinc-900/80 p-5 shadow-xl">
+        <section className="rounded-2xl border border-white/10 bg-zinc-900/80 p-4 sm:p-5 shadow-xl">
           <h2 className="text-base font-semibold text-zinc-200 mb-4 pb-2 border-b border-white/10">
             전체 참여자 현황
           </h2>
@@ -142,7 +143,7 @@ export default async function PSPage() {
       )}
 
       {/* 내 현황 - 일일 노트 */}
-      <section className="rounded-2xl border border-white/10 bg-zinc-900/80 p-5 shadow-xl">
+      <section className="rounded-2xl border border-white/10 bg-zinc-900/80 p-4 sm:p-5 shadow-xl">
         <h2 className="text-base font-semibold text-zinc-200 mb-4 pb-2 border-b border-white/10">
           내 현황 · 일일 정리 노트
         </h2>

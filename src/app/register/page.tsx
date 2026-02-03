@@ -46,9 +46,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[hsl(var(--background))]">
+    <div className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center p-4 sm:p-6 bg-[hsl(var(--background))]">
       <div className="absolute inset-0 bg-gradient-to-b from-[hsl(220,30%,18%)] to-[hsl(var(--background))] -z-10" />
-      <div className="w-full max-w-[360px] rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-8 shadow-xl">
+      <div className="w-full max-w-[360px] rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5 sm:p-8 shadow-xl mx-auto">
         <div className="text-center mb-6">
           <Link href="/" className="inline-block text-2xl font-bold text-[hsl(var(--foreground))] hover:opacity-90">
             警告

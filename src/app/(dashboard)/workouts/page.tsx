@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getParticipantId } from "@/lib/participant";
 import { prisma } from "@/lib/prisma";
 import { WorkoutsView } from "./WorkoutsView";
@@ -22,7 +23,7 @@ function getWeekRange() {
 
 export default async function WorkoutsPage() {
   const participantId = await getParticipantId();
-  if (!participantId) return null;
+  if (!participantId) redirect("/login");
   const today = todayStr();
   const { start: weekStart, end: weekEnd } = getWeekRange();
   const from = new Date();

@@ -25,4 +25,5 @@ export const db = prisma as typeof prisma & {
   psCodePost: Delegate;
   psCodePostComment: Delegate;
   psNote: Delegate;
+  psTopicMaterial: Delegate;
 };

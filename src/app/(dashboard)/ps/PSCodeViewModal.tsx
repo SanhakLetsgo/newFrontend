@@ -75,14 +75,14 @@ export function PSCodeViewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm overflow-y-auto"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="code-view-modal-title"
     >
       <div
-        className="relative flex flex-col w-full max-w-4xl max-h-[90vh] rounded-2xl border border-white/20 bg-zinc-900 shadow-2xl overflow-hidden"
+        className="relative flex flex-col w-full max-w-[calc(100vw-1.5rem)] sm:max-w-4xl max-h-[90dvh] rounded-2xl border border-white/20 bg-zinc-900 shadow-2xl overflow-hidden my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between shrink-0 border-b border-white/10 bg-zinc-800/80 px-5 py-3">

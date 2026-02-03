@@ -93,9 +93,9 @@ export function WorkoutStatsPanel({
   const totalTimeStr = totalHours > 0 ? `${totalHours}시간 ${totalMins}분` : `${totalMins}분`;
 
   return (
-    <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-      <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-5 border-b border-[hsl(var(--border))] flex items-center justify-between">
+    <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-3 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true">
+      <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-2xl w-full max-w-[calc(100vw-1.5rem)] sm:max-w-2xl max-h-[90dvh] overflow-y-auto my-auto">
+        <div className="p-4 sm:p-5 border-b border-[hsl(var(--border))] flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">운동 통계</h2>
           <div className="flex gap-2">
             <button
@@ -115,7 +115,7 @@ export function WorkoutStatsPanel({
           </div>
         </div>
 
-        <div className="p-5 space-y-6">
+        <div className="p-4 sm:p-5 space-y-5 sm:space-y-6">
           {/* 선택한 세션 요약 */}
           <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 p-4">
             <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-2">이번 세션</h3>
@@ -160,7 +160,7 @@ export function WorkoutStatsPanel({
           </div>
 
           {/* 통계 카드 */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
             <div className="rounded-xl border border-[hsl(var(--accent))]/30 bg-[hsl(var(--accent))]/10 p-4">
               <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">이번 주</p>
               <p className="text-2xl font-bold text-[hsl(var(--accent))]">{weekCount}회</p>

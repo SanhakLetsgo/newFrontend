@@ -1,27 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
 
-const PROTECTED = ["/workouts", "/papers", "/ps"];
-
-function isProtected(pathname: string) {
-  return PROTECTED.some((p) => pathname === p || pathname.startsWith(p + "/"));
-}
-
-export async function middleware(req: NextRequest) {
-  if (!isProtected(req.nextUrl.pathname)) return NextResponse.next();
-
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
+// 로그인 체크는 각 보호된 페이지(workouts, papers, ps)에서 getServerSession으로 수행.
+// Edge의 getToken이 쿠키/세션을 읽지 못하는 경우가 있어, 서버 컴포넌트에서 redirect 처리.
+export async function middleware(_req: NextRequest) {
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/workouts", "/workouts/:path*", "/papers", "/papers/:path*", "/ps", "/ps/:path*"],
+  matcher: [],
 };

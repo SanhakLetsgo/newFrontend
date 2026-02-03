@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getParticipantId } from "@/lib/participant";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -10,7 +11,7 @@ export default async function PaperDetailPage({
   params: { id: string };
 }) {
   const participantId = await getParticipantId();
-  if (!participantId) return null;
+  if (!participantId) redirect("/login");
   const { id } = params;
   const paper = await prisma.paper.findUnique({
     where: { id },
