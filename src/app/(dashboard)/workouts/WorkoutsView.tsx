@@ -25,9 +25,9 @@ function getClientTime(): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-function formatDetails(d: Record<string, unknown> | null | undefined): string {
-  if (!d || typeof d !== "object") return "—";
-  const parts = Object.entries(d).map(([k, v]) => `${k}: ${v}`);
+function formatDetails(d: unknown): string {
+  if (d == null || typeof d !== "object" || Array.isArray(d)) return "—";
+  const parts = Object.entries(d as Record<string, unknown>).map(([k, v]) => `${k}: ${v}`);
   return parts.length ? parts.join(", ") : "—";
 }
 
@@ -39,7 +39,8 @@ type Log = {
   startTime: string | null;
   endTime: string | null;
   workoutType?: string | null;
-  details?: Record<string, unknown> | null;
+  details?: unknown;
+  createdAt?: Date | null;
   user?: { name: string | null };
 };
 
@@ -82,9 +83,9 @@ export function WorkoutsView({
 
   const hasActiveSession = todaySessions.some((s) => s.startTime && !s.endTime);
 
-  function detailsToRows(d: Record<string, unknown> | null | undefined): { key: string; value: string }[] {
-    if (!d || typeof d !== "object") return [];
-    return Object.entries(d).map(([k, v]) => ({ key: k, value: String(v) }));
+  function detailsToRows(d: unknown): { key: string; value: string }[] {
+    if (d == null || typeof d !== "object" || Array.isArray(d)) return [];
+    return Object.entries(d as Record<string, unknown>).map(([k, v]) => ({ key: k, value: String(v) }));
   }
 
   function rowsToDetails(rows: { key: string; value: string }[]): Record<string, string | number> | undefined {
@@ -103,7 +104,7 @@ export function WorkoutsView({
     setEditAttended(log.attended);
     setEditStart(log.startTime ?? "");
     setEditEnd(log.endTime ?? "");
-    setEditDetails(detailsToRows(log.details as Record<string, unknown>));
+    setEditDetails(detailsToRows(log.details));
   };
 
   const saveEdit = async () => {
@@ -466,7 +467,7 @@ export function WorkoutsView({
                 <td className="p-3">{row.user?.name ?? "—"}</td>
                 <td className="p-3">{row.date}</td>
                 <td className="p-3">{row.workoutType ?? "—"}</td>
-                <td className="p-3 max-w-[180px] truncate text-xs text-[hsl(var(--muted-foreground))]" title={formatDetails(row.details as Record<string, unknown>)}>{formatDetails(row.details as Record<string, unknown>)}</td>
+                <td className="p-3 max-w-[180px] truncate text-xs text-[hsl(var(--muted-foreground))]" title={formatDetails(row.details)}>{formatDetails(row.details)}</td>
                 <td className="p-3">{row.attended ? "O" : "X"}</td>
                 <td className="p-3">{row.startTime ?? "—"}</td>
                 <td className="p-3">{row.endTime ?? "—"}</td>
