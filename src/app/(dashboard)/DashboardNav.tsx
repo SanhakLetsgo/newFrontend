@@ -7,6 +7,7 @@ const navItems = [
   { href: "/workouts", label: "운동", active: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" },
   { href: "/papers", label: "논문", active: "bg-violet-500/15 text-violet-400 border border-violet-500/20" },
   { href: "/ps", label: "창고리즘", active: "bg-amber-500/15 text-amber-400 border border-amber-500/20" },
+  { href: "/battles", label: "배틀", active: "bg-rose-500/15 text-rose-400 border border-rose-500/20" },
 ] as const;
 
 export function DashboardNav() {

@@ -17,14 +17,17 @@ model User {
   accounts      Account[]
   sessions      Session[]
   workoutLogs   WorkoutLog[]
+  workoutBattles WorkoutBattle[]
   papers        Paper[]
   paperReviews  PaperReview[]
   paperComments PaperComment[]
   psNotes             PsNote[]
   psTopics            PsTopic[]
-  psCodePosts         PsCodePost[]
-  psCodePostComments  PsCodePostComment[]
-  psTopicMaterials    PsTopicMaterial[]
+  psCodePosts              PsCodePost[]
+  psCodePostComments       PsCodePostComment[]
+  psTopicMaterials         PsTopicMaterial[]
+  codingBattleProblems     CodingBattleProblem[]
+  codingBattleSubmissions  CodingBattleSubmission[]
 }
 
 model PsNote {
@@ -169,6 +172,22 @@ model WorkoutLog {
   @@map("workout_logs")
 }
 
+model WorkoutBattle {
+  id            String   @id @default(cuid()) @map("_id")
+  userId        String   @map("user_id")
+  sport         String   @map("sport")       // 종목
+  participantA  String   @map("participant_a")
+  participantB  String   @map("participant_b")
+  result        String   @map("result")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("workout_battles")
+}
+
 model Paper {
   id        String   @id @default(cuid()) @map("_id")
   userId    String   @map("user_id")
@@ -213,4 +232,42 @@ model PaperReview {
 
   paper Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CodingBattleProblem {
+  id               String   @id @default(cuid()) @map("_id")
+  title            String   @map("title")
+  description      String   @map("description")
+  referenceCode    String?  @map("reference_code")
+  referenceLanguage String? @default("javascript") @map("reference_language")
+  testCases         Json?   @map("test_cases") // [{ input: string, expectedOutput: string }]
+  weekStart         String  @map("week_start")
+  userId           String   @map("user_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submissions CodingBattleSubmission[]
+
+  @@index([weekStart])
+  @@index([userId])
+  @@map("coding_battle_problems")
+}
+
+model CodingBattleSubmission {
+  id          String    @id @default(cuid()) @map("_id")
+  problemId   String    @map("problem_id")
+  userId      String    @map("user_id")
+  code        String    @default("") @map("code")
+  language    String    @default("javascript") @map("language")
+  startedAt        DateTime? @map("started_at")
+  completedAt      DateTime? @map("completed_at")
+  executionTimeMs  Int?      @map("execution_time_ms")
+
+  problem CodingBattleProblem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  user    User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([problemId, userId])
+  @@index([problemId])
+  @@index([userId])
+  @@map("coding_battle_submissions")
 }

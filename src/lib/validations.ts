@@ -47,12 +47,12 @@ export const paperCommentBody = z.object({
 });
 
 export const paperReviewBody = z.object({
-  summary: z.string().optional(),
-  contribution: z.string().optional(),
-  method: z.string().optional(),
-  experiment: z.string().optional(),
-  limitation: z.string().optional(),
-  idea: z.string().optional(),
+  summary: z.string().max(50000).optional(),
+  contribution: z.string().max(50000).optional(),
+  method: z.string().max(50000).optional(),
+  experiment: z.string().max(50000).optional(),
+  limitation: z.string().max(50000).optional(),
+  idea: z.string().max(50000).optional(),
 });
 
 /** 창고리즘(PS) 일일 정리 노트 */

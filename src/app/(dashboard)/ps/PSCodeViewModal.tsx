@@ -15,9 +15,11 @@ type CommentRow = {
 
 export function PSCodeViewModal({
   post,
+  currentUserId,
   onClose,
 }: {
   post: PsCodePost;
+  currentUserId: string;
   onClose: () => void;
 }) {
   const [comments, setComments] = useState<CommentRow[]>([]);
@@ -27,6 +29,25 @@ export function PSCodeViewModal({
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+
+  const canDeleteComment = (comment: CommentRow) =>
+    post.userId === currentUserId || comment.user?.id === currentUserId;
+
+  const deleteComment = async (commentId: string) => {
+    if (!confirm("이 댓글을 삭제할까요?")) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/ps/code/${post.id}/comments/${commentId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const fetchComments = useCallback(async () => {
     const res = await fetch(`/api/ps/code/${post.id}/comments`, { credentials: "include" });
@@ -103,7 +124,7 @@ export function PSCodeViewModal({
           <div>
             <div className="flex items-center gap-3 flex-wrap mb-2">
               <span className="text-sm font-medium text-zinc-300">
-                {(post.author?.trim() || post.user?.name) ?? "이름 없음"}
+                {post.user?.name ?? "이름 없음"}
               </span>
               {post.title && (
                 <span className="text-sm text-zinc-500">{post.title}</span>
@@ -144,13 +165,25 @@ export function PSCodeViewModal({
                     key={c.id}
                     className="rounded-lg border border-white/10 bg-zinc-800/50 px-4 py-3"
                   >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-zinc-300">
-                        {c.user?.name ?? "이름 없음"}
-                      </span>
-                      <span className="text-xs text-zinc-500">
-                        {new Date(c.createdAt).toLocaleString("ko-KR")}
-                      </span>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-zinc-300">
+                          {c.user?.name ?? "이름 없음"}
+                        </span>
+                        <span className="text-xs text-zinc-500">
+                          {new Date(c.createdAt).toLocaleString("ko-KR")}
+                        </span>
+                      </div>
+                      {canDeleteComment(c) && (
+                        <button
+                          type="button"
+                          onClick={() => deleteComment(c.id)}
+                          disabled={busy}
+                          className="text-xs text-zinc-500 hover:text-red-400 disabled:opacity-50"
+                        >
+                          삭제
+                        </button>
+                      )}
                     </div>
                     <p className="text-sm text-zinc-200 whitespace-pre-wrap">{c.content}</p>
                     {c.code?.trim() && (
