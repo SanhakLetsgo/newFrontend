@@ -108,7 +108,7 @@ export default async function PSPage() {
 
       {/* 주제·수업노트 + 코드 (다크 테마) */}
       <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-zinc-950/90 p-4 sm:p-6 md:p-8 shadow-2xl shadow-black/30">
-        <PSTopicsView initialTopics={initialTopics} />
+        <PSTopicsView initialTopics={initialTopics} currentUserId={participantId} />
       </div>
 
       {/* 전체 참여자 현황 (다크 카드) - 이번 주 작성자가 있을 때만 표시 */}

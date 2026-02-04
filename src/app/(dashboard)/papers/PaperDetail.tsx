@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { SafeHtml, looksLikeHtml } from "@/components/SafeHtml";
 
 type Comment = {
   id: string;
@@ -45,6 +46,42 @@ export function PaperDetail({ paper }: { paper: Paper }) {
     limitation: paper.review?.limitation ?? "",
     idea: paper.review?.idea ?? "",
   });
+  const [uploadingImageFor, setUploadingImageFor] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const imageFieldRef = useRef<keyof typeof form | null>(null);
+
+  const triggerImageUpload = (fieldKey: keyof typeof form) => {
+    imageFieldRef.current = fieldKey;
+    imageInputRef.current?.click();
+  };
+
+  const onImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fieldKey = imageFieldRef.current;
+    const file = e.target.files?.[0];
+    if (!file || !fieldKey) return;
+    e.target.value = "";
+    setUploadingImageFor(fieldKey);
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const res = await fetch("/api/upload/image", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url && fieldKey) {
+        const insert = `<img src="${data.url}" alt="이미지" />`;
+        setForm((prev) => ({
+          ...prev,
+          [fieldKey]: (prev[fieldKey] || "") + (prev[fieldKey] ? "\n" : "") + insert,
+        }));
+      }
+    } finally {
+      setUploadingImageFor(null);
+      imageFieldRef.current = null;
+    }
+  };
 
   const removeAuthor = async (index: number) => {
     const next = (paper.authors ?? []).filter((_, i) => i !== index);
@@ -183,6 +220,13 @@ export function PaperDetail({ paper }: { paper: Paper }) {
         </h2>
         {editing ? (
           <form onSubmit={saveReview} className="space-y-5">
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              className="hidden"
+              onChange={onImageFileChange}
+            />
             {[
               { key: "summary", label: "한줄요약 (1문장)", rows: 2 },
               { key: "contribution", label: "핵심 기여 (3줄 이내)", rows: 3 },
@@ -192,17 +236,31 @@ export function PaperDetail({ paper }: { paper: Paper }) {
               { key: "idea", label: "내 아이디어/후속 실험", rows: 3 },
             ].map(({ key, label, rows }) => (
               <div key={key} className="space-y-2">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
-                  {label}
-                </label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    {label}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => triggerImageUpload(key as keyof typeof form)}
+                    disabled={uploadingImageFor !== null}
+                    className="shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/50 px-2.5 py-1.5 text-xs font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] disabled:opacity-50"
+                  >
+                    {uploadingImageFor === key ? "업로드 중…" : "🖼 이미지 삽입"}
+                  </button>
+                </div>
                 <textarea
                   value={form[key as keyof typeof form]}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                   rows={rows}
+                  placeholder="텍스트 입력 또는 HTML 붙여넣기(티스토리 등) 가능"
                   className="w-full rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
                 />
               </div>
             ))}
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+              사진: 이미지 삽입 버튼 사용. 티스토리·블로그 등에서 복사한 HTML을 붙여넣어도 됩니다.
+            </p>
             <div className="flex gap-2 pt-2">
               <button
                 type="submit"
@@ -234,9 +292,20 @@ export function PaperDetail({ paper }: { paper: Paper }) {
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-2">
                       {label}
                     </h3>
-                    <p className="text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap text-[15px]">
-                      {value && value.trim() ? value : "—"}
-                    </p>
+                    {value && value.trim() ? (
+                      looksLikeHtml(value) ? (
+                        <SafeHtml
+                          html={value}
+                          className="review-html text-[hsl(var(--foreground))] leading-relaxed text-[15px] [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-2"
+                        />
+                      ) : (
+                        <p className="text-[hsl(var(--foreground))] leading-relaxed whitespace-pre-wrap text-[15px]">
+                          {value}
+                        </p>
+                      )
+                    ) : (
+                      <p className="text-[hsl(var(--muted-foreground))] text-[15px]">—</p>
+                    )}
                   </div>
                 ))}
               </div>

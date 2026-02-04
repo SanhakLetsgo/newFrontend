@@ -33,11 +33,21 @@ const cards = [
     hover: "hover:border-amber-500/40 hover:shadow-xl",
     text: "group-hover:text-amber-400",
   },
+  {
+    title: "배틀",
+    description: "이번 주 운동·코딩 순위",
+    href: "/battles",
+    icon: "🏆",
+    gradient: "from-rose-500/10 to-transparent",
+    border: "border-rose-500/20",
+    hover: "hover:border-rose-500/40 hover:shadow-xl",
+    text: "group-hover:text-rose-400",
+  },
 ] as const;
 
 export function DashboardEntryCards() {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
         <Link
           key={card.href}
