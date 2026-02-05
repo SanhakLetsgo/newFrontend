@@ -234,29 +234,37 @@ export function BattlesView({ currentUserId }: { currentUserId: string }) {
                 </Link>
                 <div className="px-4 py-3">
                   {problem.rankings.length > 0 ? (
-                    <ul className="space-y-1.5">
-                      {problem.rankings.map((r) => (
-                        <li
-                          key={r.userId}
-                          className={`flex items-center justify-between text-sm ${
-                            r.userId === currentUserId
-                              ? "text-amber-600 dark:text-amber-400"
-                              : "text-[hsl(var(--muted-foreground))]"
-                          }`}
-                        >
-                          <span>
-                            <span className="font-medium text-[hsl(var(--foreground))]">{r.rank}등</span>
-                            <span className="ml-2">{r.name}</span>
-                            {r.userId === currentUserId && (
-                              <span className="ml-1 text-xs">(나)</span>
-                            )}
-                          </span>
-                          <span className="text-xs tabular-nums">{formatTime(r.timeSeconds)}</span>
-                        </li>
-                      ))}
+                    <ul className="space-y-2">
+                      {problem.rankings.map((r) => {
+                        const isMe = r.userId === currentUserId;
+                        const medal = r.rank === 1 ? "🥇" : r.rank === 2 ? "🥈" : r.rank === 3 ? "🥉" : null;
+                        return (
+                          <li
+                            key={r.userId}
+                            className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-sm ${
+                              r.rank <= 3 ? "bg-[hsl(var(--muted))]/40" : ""
+                            } ${isMe ? "ring-1 ring-amber-400/40 bg-amber-500/10" : ""}`}
+                          >
+                            <span className="flex items-center gap-2 min-w-0">
+                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-black/10 dark:bg-white/10 text-[10px] font-bold tabular-nums">
+                                {medal ?? r.rank}
+                              </span>
+                              <span className={`truncate ${isMe ? "font-semibold text-amber-600 dark:text-amber-400" : "text-[hsl(var(--foreground))]"}`}>
+                                {r.name}
+                                {isMe && <span className="ml-1 text-[10px] text-amber-500">(나)</span>}
+                              </span>
+                            </span>
+                            <span className="shrink-0 text-xs font-mono font-medium tabular-nums text-[hsl(var(--muted-foreground))]">
+                              {formatTime(r.timeSeconds)}
+                            </span>
+                          </li>
+                        );
+                      })}
                     </ul>
                   ) : (
-                    <p className="text-sm text-[hsl(var(--muted-foreground))]">— 순위 없음 (아직 제출한 사람 없음)</p>
+                    <p className="rounded-lg border border-dashed border-[hsl(var(--border))] py-4 text-center text-sm text-[hsl(var(--muted-foreground))]">
+                      순위 없음 · 아직 제출한 사람 없음
+                    </p>
                   )}
                 </div>
               </li>
