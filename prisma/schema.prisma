@@ -28,6 +28,7 @@ model User {
   psTopicMaterials         PsTopicMaterial[]
   codingBattleProblems     CodingBattleProblem[]
   codingBattleSubmissions  CodingBattleSubmission[]
+  warningBoardEntries      WarningBoardEntry[]
 }
 
 model PsNote {
@@ -270,4 +271,20 @@ model CodingBattleSubmission {
   @@index([problemId])
   @@index([userId])
   @@map("coding_battle_submissions")
+}
+
+model WarningBoardEntry {
+  id         String   @id @default(cuid()) @map("_id")
+  userId     String   @map("user_id")
+  targetName String   @map("target_name")
+  count      Int      @map("deception_score")
+  weight     Int      @default(100) @map("weight")
+  memo       String?  @map("memo")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("warning_board_entries")
 }

@@ -183,30 +183,50 @@ export function CodingBattleProblemView({
 
       {rankings.length > 0 && (
         <div className="lg:order-none">
-          <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/60 p-4 sticky top-24">
-            <h2 className="text-base font-semibold text-[hsl(var(--foreground))] mb-3">순위</h2>
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mb-3">
-              제출 완료한 순서 + 걸린 시간
-            </p>
+          <section className="rounded-2xl border border-amber-500/25 bg-gradient-to-b from-amber-500/10 to-[hsl(var(--card))]/80 p-4 sticky top-24 shadow-lg shadow-amber-500/5">
+            <div className="mb-4 flex items-center gap-2 border-b border-amber-500/20 pb-3">
+              <span className="text-2xl" aria-hidden>🏆</span>
+              <div>
+                <h2 className="text-base font-bold tracking-tight text-[hsl(var(--foreground))]">LEADERBOARD</h2>
+                <p className="text-[10px] uppercase tracking-widest text-amber-500/80">실행 시간 기준 · 빠를수록 상위</p>
+              </div>
+            </div>
+
             <ul className="space-y-2">
-              {rankings.map((r) => (
-                <li
-                  key={r.userId}
-                  className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
-                    r.userId === currentUserId
-                      ? "border-amber-500/40 bg-amber-500/15"
-                      : "border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30"
-                  }`}
-                >
-                  <span className="font-medium text-[hsl(var(--foreground))]">
-                    {r.rank}등 {r.name}
-                    {r.userId === currentUserId && " (나)"}
-                  </span>
-                  <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                    {formatTime(r.timeSeconds)}
-                  </span>
-                </li>
-              ))}
+              {rankings.map((r) => {
+                const isMe = r.userId === currentUserId;
+                const rankStyle =
+                  r.rank === 1
+                    ? "border-amber-400/50 bg-gradient-to-r from-amber-500/25 to-yellow-500/15 shadow-sm shadow-amber-500/10"
+                    : r.rank === 2
+                      ? "border-slate-400/40 bg-gradient-to-r from-slate-500/20 to-zinc-500/10"
+                      : r.rank === 3
+                        ? "border-amber-700/40 dark:border-amber-600/40 bg-gradient-to-r from-amber-700/20 to-amber-800/10 dark:from-amber-600/20 dark:to-amber-700/10"
+                        : "border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30";
+                const medal =
+                  r.rank === 1 ? "🥇" : r.rank === 2 ? "🥈" : r.rank === 3 ? "🥉" : null;
+                return (
+                  <li
+                    key={r.userId}
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm transition-shadow hover:shadow-md ${rankStyle} ${
+                      isMe ? "ring-2 ring-amber-400/50 ring-offset-2 ring-offset-[hsl(var(--background))]" : ""
+                    }`}
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-black/10 dark:bg-white/10 text-xs font-bold tabular-nums">
+                        {medal ?? r.rank}
+                      </span>
+                      <span className={`truncate font-medium ${isMe ? "text-amber-600 dark:text-amber-400" : "text-[hsl(var(--foreground))]"}`}>
+                        {r.name}
+                        {isMe && <span className="ml-1 text-[10px] font-semibold text-amber-500">(나)</span>}
+                      </span>
+                    </div>
+                    <span className="shrink-0 text-xs font-mono font-semibold tabular-nums text-[hsl(var(--muted-foreground))]">
+                      {formatTime(r.timeSeconds)}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         </div>

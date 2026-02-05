@@ -29,6 +29,7 @@ type PrismaExtended = PrismaClient & {
   codingBattleProblem: Delegate;
   codingBattleSubmission: Delegate;
   workoutBattle: Delegate;
+  warningBoardEntry: Delegate;
 };
 
 export const prisma = prismaClient as PrismaExtended;
