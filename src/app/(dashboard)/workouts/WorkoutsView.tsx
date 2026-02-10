@@ -40,8 +40,9 @@ type Log = {
   startTime: string | null;
   endTime: string | null;
   workoutType?: string | null;
+  reps?: number | null;
   details?: unknown;
-  createdAt?: Date | null;
+  createdAt?: string | Date | null;
   user?: { name: string | null };
 };
 
@@ -63,6 +64,7 @@ export function WorkoutsView({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [workoutType, setWorkoutType] = useState("");
+  const [todayReps, setTodayReps] = useState("");
   const [treadmillMinutes, setTreadmillMinutes] = useState("");
   const [treadmillCalories, setTreadmillCalories] = useState("");
   const [treadmillDistance, setTreadmillDistance] = useState("");
@@ -72,12 +74,15 @@ export function WorkoutsView({
   const [editAttended, setEditAttended] = useState(false);
   const [editStart, setEditStart] = useState("");
   const [editEnd, setEditEnd] = useState("");
+  const [editWorkoutType, setEditWorkoutType] = useState("");
+  const [editReps, setEditReps] = useState("");
   const [editDetails, setEditDetails] = useState<{ key: string; value: string }[]>([]);
   const [showManual, setShowManual] = useState(false);
   const [manualDate, setManualDate] = useState(getClientDate());
   const [manualStart, setManualStart] = useState("");
   const [manualEnd, setManualEnd] = useState("");
   const [manualType, setManualType] = useState("");
+  const [manualReps, setManualReps] = useState("");
   const [manualTreadmillM, setManualTreadmillM] = useState("");
   const [manualTreadmillC, setManualTreadmillC] = useState("");
   const [manualTreadmillD, setManualTreadmillD] = useState("");
@@ -107,6 +112,8 @@ export function WorkoutsView({
     setEditAttended(log.attended);
     setEditStart(log.startTime ?? "");
     setEditEnd(log.endTime ?? "");
+    setEditWorkoutType(log.workoutType ?? "");
+    setEditReps(log.reps != null ? String(log.reps) : "");
     setEditDetails(detailsToRows(log.details));
   };
 
@@ -115,6 +122,7 @@ export function WorkoutsView({
     setBusy(true);
     try {
       const details = rowsToDetails(editDetails);
+      const repsNum = editReps.trim() === "" ? null : Math.max(0, Math.round(Number(editReps))) || null;
       const res = await fetch(`/api/workouts/log/${editModal.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -123,6 +131,8 @@ export function WorkoutsView({
           attended: editAttended,
           startTime: editStart.trim() || null,
           endTime: editEnd.trim() || null,
+          workoutType: editWorkoutType.trim() || null,
+          reps: repsNum,
           ...(details && Object.keys(details).length > 0 && { details }),
         }),
       });
@@ -200,6 +210,7 @@ export function WorkoutsView({
     setBusy(true);
     try {
       const details = buildDetails();
+      const repsNum = todayReps.trim() === "" ? undefined : Math.max(0, Math.round(Number(todayReps)));
       const res = await fetch("/api/workouts/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -207,6 +218,7 @@ export function WorkoutsView({
         body: JSON.stringify({
           date: getClientDate(),
           endTime: getClientTime(),
+          ...(repsNum != null && { reps: repsNum }),
           ...(details && Object.keys(details).length > 0 && { details }),
         }),
       });
@@ -214,6 +226,7 @@ export function WorkoutsView({
         const data = await res.json();
         alert(data.error?.message ?? data.error ?? "종료 실패");
       } else {
+        setTodayReps("");
         setTreadmillMinutes("");
         setTreadmillCalories("");
         setTreadmillDistance("");
@@ -256,6 +269,7 @@ export function WorkoutsView({
           startTime: manualStart.trim() || null,
           endTime: manualEnd.trim() || null,
           workoutType: manualType.trim() || null,
+          reps: manualReps.trim() === "" ? undefined : Math.max(0, Math.round(Number(manualReps))),
           ...(details && Object.keys(details).length > 0 && { details }),
         }),
       });
@@ -267,6 +281,7 @@ export function WorkoutsView({
         setManualStart("");
         setManualEnd("");
         setManualType("");
+        setManualReps("");
         setManualTreadmillM("");
         setManualTreadmillC("");
         setManualTreadmillD("");
@@ -322,17 +337,30 @@ export function WorkoutsView({
           <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3 flex items-center gap-2">
             <span className="text-[hsl(var(--accent))]">+</span> 오늘 운동 기록하기
           </h3>
-          <div className="mb-3">
-            <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1.5">
-              운동 종목 <span className="text-[hsl(var(--accent))]">(필수)</span>
-            </label>
-            <input
-              type="text"
-              value={workoutType}
-              onChange={(e) => setWorkoutType(e.target.value)}
-              placeholder="예: 러닝머신, 헬스, 수영"
-              className="w-full max-w-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1.5">
+                운동 종목 <span className="text-[hsl(var(--accent))]">(필수)</span>
+              </label>
+              <input
+                type="text"
+                value={workoutType}
+                onChange={(e) => setWorkoutType(e.target.value)}
+                placeholder="예: 러닝머신, 헬스, 수영"
+                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-[hsl(var(--muted-foreground))] mb-1.5">회수 (선택)</label>
+              <input
+                type="number"
+                min={0}
+                value={todayReps}
+                onChange={(e) => setTodayReps(e.target.value)}
+                placeholder="예: 3세트, 10회"
+                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--accent))]"
+              />
+            </div>
           </div>
           {TREADMILL_TYPES.some((t) => workoutType.trim().toLowerCase().includes(t.toLowerCase())) ? (
             <div className="mb-3 p-2 rounded-lg bg-[hsl(var(--muted))]/50 grid grid-cols-3 gap-2">
@@ -379,7 +407,7 @@ export function WorkoutsView({
               {todayAttended ? "출석 취소" : "출석 체크"}
             </button>
           </div>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">시작 → 종료로 한 번에 기록하거나, 아래에서 수동으로 추가할 수 있어요.</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2">종목 · 회수 · 시작/종료 시간을 기록하세요. 회수는 운동 종료 시 반영돼요.</p>
         </div>
 
         {/* 오늘 기록 요약 */}
@@ -396,7 +424,8 @@ export function WorkoutsView({
               <ul className="text-sm mb-0 space-y-1">
                 {todaySessions.map((s, i) => (
                   <li key={s.id}>
-                    {todaySessions.length - i}회: {s.startTime ?? "—"} ~ {s.endTime ?? "진행 중"} ({calcDuration(s.startTime, s.endTime)})
+                    {todaySessions.length - i}회차: {s.workoutType ?? "—"} {s.reps != null ? `· ${s.reps}회 ` : ""}
+                    {s.startTime ?? "—"} ~ {s.endTime ?? "진행 중"} ({calcDuration(s.startTime, s.endTime)})
                   </li>
                 ))}
               </ul>
@@ -413,23 +442,29 @@ export function WorkoutsView({
           </button>
           {showManual && (
             <div className="mt-3 p-3 rounded-lg bg-[hsl(var(--muted))]/50 space-y-2">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 <div>
                   <label className="block text-xs mb-0.5">날짜</label>
                   <input type="date" value={manualDate} onChange={(e) => setManualDate(e.target.value)} className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
                 </div>
                 <div>
-                  <label className="block text-xs mb-0.5">시작 (HH:MM)</label>
-                  <input type="text" value={manualStart} onChange={(e) => setManualStart(e.target.value)} placeholder="09:00" className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
+                  <label className="block text-xs mb-0.5">종목</label>
+                  <input type="text" value={manualType} onChange={(e) => setManualType(e.target.value)} placeholder="예: 러닝, 헬스" className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
                 </div>
                 <div>
-                  <label className="block text-xs mb-0.5">종료 (HH:MM)</label>
-                  <input type="text" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} placeholder="10:00" className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
+                  <label className="block text-xs mb-0.5">회수</label>
+                  <input type="number" min={0} value={manualReps} onChange={(e) => setManualReps(e.target.value)} placeholder="0" className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs mb-0.5">종목</label>
-                <input type="text" value={manualType} onChange={(e) => setManualType(e.target.value)} placeholder="예: 러닝머신, 헬스" className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
+                <div className="grid grid-cols-2 gap-1">
+                  <div>
+                    <label className="block text-xs mb-0.5">시작</label>
+                    <input type="text" value={manualStart} onChange={(e) => setManualStart(e.target.value)} placeholder="09:00" className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs mb-0.5">종료</label>
+                    <input type="text" value={manualEnd} onChange={(e) => setManualEnd(e.target.value)} placeholder="10:00" className="w-full rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm" />
+                  </div>
+                </div>
               </div>
               {TREADMILL_TYPES.some((t) => manualType.trim().toLowerCase().includes(t.toLowerCase())) ? (
                 <div className="grid grid-cols-3 gap-2">
@@ -463,6 +498,7 @@ export function WorkoutsView({
               <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">참여자</th>
               <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">날짜</th>
               <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">종목</th>
+              <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">회수</th>
               <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap hidden md:table-cell">상세</th>
               <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">출석</th>
               <th className="text-left p-2 sm:p-3 font-medium whitespace-nowrap">시작</th>
@@ -483,6 +519,7 @@ export function WorkoutsView({
                 <td className="p-2 sm:p-3">{row.user?.name ?? "—"}</td>
                 <td className="p-2 sm:p-3 whitespace-nowrap">{row.date}</td>
                 <td className="p-2 sm:p-3">{row.workoutType ?? "—"}</td>
+                <td className="p-2 sm:p-3 whitespace-nowrap">{row.reps != null ? `${row.reps}회` : "—"}</td>
                 <td className="p-2 sm:p-3 max-w-[120px] md:max-w-[180px] truncate text-xs text-[hsl(var(--muted-foreground))] hidden md:table-cell" title={formatDetails(row.details)}>{formatDetails(row.details)}</td>
                 <td className="p-2 sm:p-3">{row.attended ? "O" : "X"}</td>
                 <td className="p-2 sm:p-3 whitespace-nowrap">{row.startTime ?? "—"}</td>
@@ -521,6 +558,27 @@ export function WorkoutsView({
                 />
                 <span className="text-sm">출석</span>
               </label>
+              <div>
+                <label className="block text-sm mb-1">종목</label>
+                <input
+                  type="text"
+                  value={editWorkoutType}
+                  onChange={(e) => setEditWorkoutType(e.target.value)}
+                  placeholder="예: 러닝, 헬스"
+                  className="w-full rounded-md border border-[hsl(var(--border))] px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">회수</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={editReps}
+                  onChange={(e) => setEditReps(e.target.value)}
+                  placeholder="0"
+                  className="w-full rounded-md border border-[hsl(var(--border))] px-3 py-2 text-sm"
+                />
+              </div>
               <div>
                 <label className="block text-sm mb-1">시작 (HH:MM)</label>
                 <input

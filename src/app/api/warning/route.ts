@@ -13,6 +13,7 @@ type EntryRow = {
   user: { name: string | null } | null;
 };
 
+
 export async function GET() {
   const participantId = await getParticipantId();
   if (!participantId) {

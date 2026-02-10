@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const { date, endTime: clientEndTime, details } = parsed.data;
+    const { date, endTime: clientEndTime, reps, details } = parsed.data;
     const allForDate = await prisma.workoutLog.findMany({
       where: { userId: participantId, date, startTime: { not: null } },
     });
@@ -49,7 +49,11 @@ export async function POST(req: Request) {
     }
     const log = await prisma.workoutLog.update({
       where: { id: active.id },
-      data: { endTime, ...(details != null && Object.keys(details).length > 0 && { details }) },
+      data: {
+        endTime,
+        ...(reps != null && { reps }),
+        ...(details != null && Object.keys(details).length > 0 && { details }),
+      },
     });
     return NextResponse.json(log);
   } catch (e) {
