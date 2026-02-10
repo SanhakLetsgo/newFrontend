@@ -8,6 +8,8 @@ export const workoutLogBody = z.object({
   attended: z.boolean().optional(),
   startTime: z.string().regex(timeRegex).nullable().optional(),
   endTime: z.string().regex(timeRegex).nullable().optional(),
+  workoutType: z.string().max(100).nullable().optional(),
+  reps: z.number().int().min(0).nullable().optional(),
   details: z.record(z.string(), detailsValue).nullable().optional(),
 });
 
@@ -20,6 +22,7 @@ export const workoutStartBody = z.object({
 export const workoutEndBody = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   endTime: z.string().regex(timeRegex).optional(),
+  reps: z.number().int().min(0).nullable().optional(),
   details: z.record(z.string(), detailsValue).optional(),
 });
 
@@ -30,6 +33,7 @@ export const workoutCreateBody = z.object({
   startTime: z.string().regex(timeRegex).nullable().optional(),
   endTime: z.string().regex(timeRegex).nullable().optional(),
   workoutType: z.string().max(100).nullable().optional(),
+  reps: z.number().int().min(0).nullable().optional(),
   details: z.record(z.string(), detailsValue).nullable().optional(),
 });
 

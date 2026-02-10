@@ -161,6 +161,7 @@ model WorkoutLog {
   date        String
   attended    Boolean  @default(false)
   workoutType String?  @map("workout_type")
+  reps        Int?     @map("reps")
   startTime   String?  @map("start_time")
   endTime     String?  @map("end_time")
   details     Json?    @map("details")

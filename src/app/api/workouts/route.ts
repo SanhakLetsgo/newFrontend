@@ -18,7 +18,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const { date, attended, startTime, endTime, workoutType, details } = parsed.data;
+    const { date, attended, startTime, endTime, workoutType, reps, details } = parsed.data;
     if (startTime && endTime) {
       const [sh, sm] = startTime.split(":").map(Number);
       const [eh, em] = endTime.split(":").map(Number);
@@ -37,6 +37,7 @@ export async function POST(req: Request) {
         startTime: startTime?.trim() || null,
         endTime: endTime?.trim() || null,
         workoutType: workoutType?.trim() || null,
+        reps: reps != null ? reps : undefined,
         details:
           details && Object.keys(details).length > 0
             ? (details as Prisma.InputJsonValue)
