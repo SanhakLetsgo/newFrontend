@@ -104,35 +104,35 @@ export function WarningView({ currentUserId }: { currentUserId: string }) {
           <span className="text-xl">➕</span> 경고 추가하기
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">대상 이름</span>
-              <input
-                type="text"
-                value={targetName}
-                onChange={(e) => setTargetName(e.target.value)}
-                placeholder="예: 홍길동"
-                className="mt-1 w-full rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-2.5 text-sm focus:border-red-500/50 focus:outline-none focus:ring-2 focus:ring-red-500/20"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">가중치 (0~100%)</span>
-              <p className="text-[10px] text-[hsl(var(--muted-foreground))]/80 mt-0.5">순위에 반영됩니다. 100%=전부, 50%=절반</p>
-              <div className="mt-1 flex items-center gap-2">
+          <label className="block">
+            <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">대상 이름</span>
+            <input
+              type="text"
+              value={targetName}
+              onChange={(e) => setTargetName(e.target.value)}
+              placeholder="예: 홍길동"
+              className="mt-1 w-full rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-2.5 text-sm focus:border-red-500/50 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">가중치 (0~100%)</span>
+            <p className="text-[10px] text-[hsl(var(--muted-foreground))]/80 mt-0.5 mb-2">순위에 반영됩니다. 100%=전부, 50%=절반</p>
+            <div className="rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-3 focus-within:border-red-500/50 focus-within:ring-2 focus-within:ring-red-500/20 transition-[border-color,box-shadow]">
+              <div className="flex items-center gap-3">
                 <input
                   type="range"
                   min={0}
                   max={100}
                   value={weight}
                   onChange={(e) => setWeight(Number(e.target.value))}
-                  className="h-3 flex-1 accent-red-500"
+                  className="h-2.5 flex-1 accent-red-500 min-w-0"
                 />
-                <span className="w-12 rounded-lg bg-[hsl(var(--muted))] px-2 py-1 text-center font-mono text-sm font-bold tabular-nums">
+                <span className="w-14 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/50 py-1.5 text-center font-mono text-sm font-semibold tabular-nums text-[hsl(var(--foreground))]">
                   {weight}%
                 </span>
               </div>
-            </label>
-          </div>
+            </div>
+          </label>
           <label className="block">
             <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">사유 (선택)</span>
             <input
