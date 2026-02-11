@@ -51,12 +51,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
   const targetName = typeof body.targetName === "string" ? body.targetName.trim() : "";
-  const count =
+  const countRaw =
     typeof body.count === "number"
       ? Math.round(body.count)
       : typeof body.count === "string"
         ? Math.round(Number(body.count))
         : NaN;
+  const count = Number.isFinite(countRaw) && countRaw >= 1 ? countRaw : 1;
   const weightRaw =
     typeof body.weight === "number"
       ? Math.round(body.weight)
@@ -68,9 +69,6 @@ export async function POST(req: Request) {
 
   if (!targetName) {
     return NextResponse.json({ error: "대상 이름을 입력해 주세요." }, { status: 400 });
-  }
-  if (!Number.isFinite(count) || count < 1) {
-    return NextResponse.json({ error: "횟수는 1 이상으로 입력해 주세요." }, { status: 400 });
   }
 
   const created = (await prisma.warningBoardEntry.create({

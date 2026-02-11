@@ -44,6 +44,16 @@ const cards = [
     text: "group-hover:text-rose-400",
   },
   {
+    title: "경고판",
+    description: "기만자 순위·경고 기록",
+    href: "/warning",
+    icon: "⚠️",
+    gradient: "from-red-500/10 to-transparent",
+    border: "border-red-500/20",
+    hover: "hover:border-red-500/40 hover:shadow-xl",
+    text: "group-hover:text-red-400",
+  },
+  {
     title: "마이페이지",
     description: "내 운동·논문·코드 현황",
     href: "/mypage",
@@ -57,7 +67,7 @@ const cards = [
 
 export function DashboardEntryCards() {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((card) => (
         <Link
           key={card.href}
