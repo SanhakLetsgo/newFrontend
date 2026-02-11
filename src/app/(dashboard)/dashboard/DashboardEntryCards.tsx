@@ -43,6 +43,16 @@ const cards = [
     hover: "hover:border-rose-500/40 hover:shadow-xl",
     text: "group-hover:text-rose-400",
   },
+  {
+    title: "마이페이지",
+    description: "내 운동·논문·코드 현황",
+    href: "/mypage",
+    icon: "👤",
+    gradient: "from-[hsl(var(--accent))]/15 to-transparent",
+    border: "border-[hsl(var(--accent))]/30",
+    hover: "hover:border-[hsl(var(--accent))]/50 hover:shadow-xl",
+    text: "group-hover:text-[hsl(var(--accent))]",
+  },
 ] as const;
 
 export function DashboardEntryCards() {

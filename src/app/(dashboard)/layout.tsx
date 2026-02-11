@@ -34,7 +34,7 @@ export default async function DashboardLayout({
                 <DashboardNav />
                 <span className="text-[hsl(var(--muted-foreground))] mx-1">·</span>
                 <Link
-                  href="/dashboard"
+                  href="/mypage"
                   className="text-xs sm:text-sm text-[hsl(var(--muted-foreground))] px-2 sm:px-3 py-2 rounded-lg hover:bg-[hsl(var(--muted))]/80 hover:text-[hsl(var(--foreground))] transition-colors truncate max-w-[80px] sm:max-w-none"
                 >
                   {displayName}
