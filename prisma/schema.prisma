@@ -29,6 +29,26 @@ model User {
   codingBattleProblems     CodingBattleProblem[]
   codingBattleSubmissions  CodingBattleSubmission[]
   warningBoardEntries      WarningBoardEntry[]
+  notifications            Notification[]
+}
+
+model Notification {
+  id        String   @id @default(cuid()) @map("_id")
+  userId    String   @map("user_id")
+  type      String   @map("type")   // "paper_comment" | "code_comment"
+  read      Boolean  @default(false) @map("read")
+  actorId   String   @map("actor_id")
+  actorName String   @map("actor_name")
+  message   String   @map("message")
+  link      String   @map("link")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 model PsNote {

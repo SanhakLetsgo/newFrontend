@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getParticipantId } from "@/lib/participant";
 import { db } from "@/lib/prisma";
 import { psCodePostCommentBody } from "@/lib/validations";
+import { createCodeCommentNotifications } from "@/lib/notifications";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -48,6 +49,10 @@ export async function POST(req: Request, { params }: Params) {
       },
       include: { user: { select: { id: true, name: true } } },
     });
+    const commenterName = (comment.user as { name: string | null })?.name ?? "알 수 없음";
+    createCodeCommentNotifications(codePostId, participantId, commenterName).catch((err) =>
+      console.error("Code comment notification error:", err)
+    );
     return NextResponse.json(comment);
   } catch (e) {
     console.error(e);

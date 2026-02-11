@@ -108,7 +108,7 @@ export function PSCodeViewModal({
       >
         <div className="flex items-center justify-between shrink-0 border-b border-white/10 bg-zinc-800/80 px-5 py-3">
           <h2 id="code-view-modal-title" className="text-lg font-semibold text-zinc-100">
-            피드백 원하는 코드 전체보기
+            {post.kind === "solution" ? "정답 코드 전체보기" : "피드백 원하는 코드 전체보기"}
           </h2>
           <button
             type="button"

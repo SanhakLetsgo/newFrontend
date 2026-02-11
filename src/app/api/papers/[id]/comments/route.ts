@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getParticipantId } from "@/lib/participant";
 import { prisma } from "@/lib/prisma";
 import { paperCommentBody } from "@/lib/validations";
+import { createPaperCommentNotifications } from "@/lib/notifications";
 
 export async function GET(
   _req: Request,
@@ -29,7 +30,7 @@ export async function POST(
     return NextResponse.json({ error: "참여자를 선택해 주세요." }, { status: 401 });
   }
   const { id: paperId } = params;
-  const paper = await prisma.paper.findUnique({ where: { id: paperId } });
+  const paper = await prisma.paper.findUnique({ where: { id: paperId }, select: { id: true, title: true } });
   if (!paper) {
     return NextResponse.json({ error: "논문을 찾을 수 없습니다." }, { status: 404 });
   }
@@ -50,6 +51,10 @@ export async function POST(
       },
       include: { user: { select: { name: true } } },
     });
+    const commenterName = comment.user?.name ?? "알 수 없음";
+    createPaperCommentNotifications(paperId, participantId, commenterName, paper.title).catch((err) =>
+      console.error("Paper comment notification error:", err)
+    );
     return NextResponse.json(comment);
   } catch (e) {
     console.error(e);

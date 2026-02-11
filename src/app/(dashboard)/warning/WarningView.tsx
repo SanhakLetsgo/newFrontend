@@ -18,7 +18,6 @@ export function WarningView({ currentUserId }: { currentUserId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [targetName, setTargetName] = useState("");
-  const [count, setCount] = useState(1);
   const [weight, setWeight] = useState(100);
   const [memo, setMemo] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -45,11 +44,6 @@ export function WarningView({ currentUserId }: { currentUserId: string }) {
       setAddError("대상 이름을 입력해 주세요.");
       return;
     }
-    const countNum = Math.round(Number(count));
-    if (!Number.isFinite(countNum) || countNum < 1) {
-      setAddError("횟수는 1 이상으로 입력해 주세요.");
-      return;
-    }
     const weightNum = Math.round(Number(weight));
     const w = Number.isFinite(weightNum) && weightNum >= 0 && weightNum <= 100 ? weightNum : 100;
     setSubmitting(true);
@@ -58,14 +52,13 @@ export function WarningView({ currentUserId }: { currentUserId: string }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ targetName: name, count: countNum, weight: w, memo: memo.trim() || null }),
+        body: JSON.stringify({ targetName: name, weight: w, memo: memo.trim() || null }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error ?? "추가 실패");
       const newEntry = data as Entry;
       setEntries((prev) => [newEntry, ...prev]);
       setTargetName("");
-      setCount(1);
       setWeight(100);
       setMemo("");
     } catch (err) {
@@ -85,7 +78,7 @@ export function WarningView({ currentUserId }: { currentUserId: string }) {
     }
     return Array.from(map.entries())
       .map(([name, v]) => ({ name, total: v.total, weighted: Math.round(v.weighted * 10) / 10 }))
-      .sort((a, b) => b.total - a.total);
+      .sort((a, b) => b.weighted - a.weighted || b.total - a.total);
   })();
 
   if (loading) {
@@ -111,44 +104,35 @@ export function WarningView({ currentUserId }: { currentUserId: string }) {
           <span className="text-xl">➕</span> 경고 추가하기
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <label className="block">
-              <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">대상 이름</span>
-              <input
-                type="text"
-                value={targetName}
-                onChange={(e) => setTargetName(e.target.value)}
-                placeholder="예: 홍길동"
-                className="mt-1 w-full rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-2.5 text-sm focus:border-red-500/50 focus:outline-none focus:ring-2 focus:ring-red-500/20"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">횟수</span>
-              <input
-                type="number"
-                min={1}
-                value={count}
-                onChange={(e) => setCount(Number(e.target.value) || 1)}
-                className="mt-1 w-full rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-2.5 text-sm font-mono tabular-nums focus:border-red-500/50 focus:outline-none focus:ring-2 focus:ring-red-500/20"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">가중치 (0~100%, 만점)</span>
-              <div className="mt-1 flex items-center gap-2">
+          <label className="block">
+            <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">대상 이름</span>
+            <input
+              type="text"
+              value={targetName}
+              onChange={(e) => setTargetName(e.target.value)}
+              placeholder="예: 홍길동"
+              className="mt-1 w-full rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-2.5 text-sm focus:border-red-500/50 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">가중치 (0~100%)</span>
+            <p className="text-[10px] text-[hsl(var(--muted-foreground))]/80 mt-0.5 mb-2">순위에 반영됩니다. 100%=전부, 50%=절반</p>
+            <div className="rounded-xl border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-4 py-3 focus-within:border-red-500/50 focus-within:ring-2 focus-within:ring-red-500/20 transition-[border-color,box-shadow]">
+              <div className="flex items-center gap-3">
                 <input
                   type="range"
                   min={0}
                   max={100}
                   value={weight}
                   onChange={(e) => setWeight(Number(e.target.value))}
-                  className="h-3 flex-1 accent-red-500"
+                  className="h-2.5 flex-1 accent-red-500 min-w-0"
                 />
-                <span className="w-12 rounded-lg bg-[hsl(var(--muted))] px-2 py-1 text-center font-mono text-sm font-bold tabular-nums">
+                <span className="w-14 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/50 py-1.5 text-center font-mono text-sm font-semibold tabular-nums text-[hsl(var(--foreground))]">
                   {weight}%
                 </span>
               </div>
-            </label>
-          </div>
+            </div>
+          </label>
           <label className="block">
             <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">사유 (선택)</span>
             <input
@@ -179,7 +163,7 @@ export function WarningView({ currentUserId }: { currentUserId: string }) {
             <span className="text-3xl" aria-hidden>🏆</span>
             <div>
               <h2 className="text-lg font-black tracking-tight text-[hsl(var(--foreground))]">기만자 순위</h2>
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">총 횟수 합산 · 가중치 반영 점수 함께 표시</p>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">순위 기준: 가중치 반영 점수 (높을수록 위). 동점이면 받은 경고 횟수로 순서 결정</p>
             </div>
           </div>
           <ul className="space-y-3">
@@ -212,10 +196,10 @@ export function WarningView({ currentUserId }: { currentUserId: string }) {
                   </div>
                   <div className="flex shrink-0 items-center gap-4">
                     <span className="rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 px-4 py-2 font-black text-lg text-white tabular-nums shadow-lg shadow-red-500/30">
-                      총 {r.total}회
+                      {r.weighted}점
                     </span>
                     <span className="text-sm text-[hsl(var(--muted-foreground))]">
-                      가중치 반영 <span className="font-mono font-bold text-[hsl(var(--foreground))]">{r.weighted}</span>점
+                      경고 <span className="font-mono font-bold text-[hsl(var(--foreground))]">{r.total}</span>회
                     </span>
                   </div>
                 </li>

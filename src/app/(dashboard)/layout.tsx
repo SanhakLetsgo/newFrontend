@@ -2,6 +2,7 @@ import { getParticipantId } from "@/lib/participant";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { DashboardNav } from "./DashboardNav";
+import { HeaderNotification } from "./HeaderNotification";
 import { HeaderSignOut } from "@/app/(dashboard)/HeaderSignOut";
 
 export default async function DashboardLayout({
@@ -39,6 +40,7 @@ export default async function DashboardLayout({
                 >
                   {displayName}
                 </Link>
+                <HeaderNotification />
                 <HeaderSignOut />
               </>
             ) : (

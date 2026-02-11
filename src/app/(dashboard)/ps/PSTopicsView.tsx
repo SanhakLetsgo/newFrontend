@@ -304,6 +304,7 @@ export function PSTopicsView({
                     }}
                     onEdit={openEdit}
                     onDelete={(postId) => deleteCode(postId, topic.id)}
+                    onViewFull={setViewFullPost}
                     editingPostId={editingPost?.id ?? null}
                     editState={{
                       codeTitle,
@@ -611,7 +612,7 @@ function Section({
                           수정
                         </button>
                       )}
-                      {kind === "feedback" && onViewFull && (
+                      {onViewFull && (
                         <button
                           type="button"
                           onClick={() => onViewFull(post)}
