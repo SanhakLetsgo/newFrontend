@@ -164,6 +164,7 @@ model WorkoutLog {
   reps        Int?     @map("reps")
   startTime   String?  @map("start_time")
   endTime     String?  @map("end_time")
+  calories    Int?     @map("calories")
   details     Json?    @map("details")
   createdAt   DateTime? @default(now()) @map("created_at")
 

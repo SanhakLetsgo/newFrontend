@@ -9,7 +9,7 @@ import { cpp } from "@codemirror/lang-cpp";
 
 const CodeMirror = dynamic(
   () => import("@uiw/react-codemirror").then((mod) => mod.default),
-  { ssr: false }
+  { ssr: false, loading: () => <div className="min-h-[240px] animate-pulse rounded-xl bg-white/5" /> }
 );
 
 const LANG_EXT: Record<string, Extension> = {

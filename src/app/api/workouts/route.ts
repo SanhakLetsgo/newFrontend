@@ -10,15 +10,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "참여자를 선택해 주세요." }, { status: 401 });
   }
   try {
+    const user = await prisma.user.findUnique({ where: { id: participantId }, select: { id: true } });
+    if (!user) {
+      return NextResponse.json(
+        { error: "로그인 정보가 만료되었거나 사용자를 찾을 수 없습니다. 다시 로그인해 주세요." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const parsed = workoutCreateBody.safeParse(body);
     if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstMessage = Object.values(fieldErrors).flat().find(Boolean);
       return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
+        { error: typeof firstMessage === "string" ? firstMessage : "입력값을 확인해 주세요.", fieldErrors },
         { status: 400 }
       );
     }
-    const { date, attended, startTime, endTime, workoutType, reps, details } = parsed.data;
+    const { date, attended, startTime, endTime, workoutType, reps, calories, details } = parsed.data;
     if (startTime && endTime) {
       const [sh, sm] = startTime.split(":").map(Number);
       const [eh, em] = endTime.split(":").map(Number);
@@ -29,25 +39,40 @@ export async function POST(req: Request) {
         );
       }
     }
+
+    const caloriesInt = calories != null && Number.isFinite(Number(calories)) ? Math.round(Number(calories)) : null;
+    const repsInt = reps != null && Number.isFinite(Number(reps)) ? Math.round(Number(reps)) : null;
+    const workoutTypeVal = workoutType?.trim() || null;
+    const startTimeVal = startTime?.trim() || null;
+    const endTimeVal = endTime?.trim() || null;
+
+    let detailsJson: Prisma.InputJsonValue | null = null;
+    if (details && typeof details === "object" && !Array.isArray(details) && Object.keys(details).length > 0) {
+      try {
+        detailsJson = JSON.parse(JSON.stringify(details)) as Prisma.InputJsonValue;
+      } catch {
+        detailsJson = null;
+      }
+    }
+
     const log = await prisma.workoutLog.create({
       data: {
         userId: participantId,
         date,
         attended: attended ?? false,
-        startTime: startTime?.trim() || null,
-        endTime: endTime?.trim() || null,
-        workoutType: workoutType?.trim() || null,
-        reps: reps != null ? reps : undefined,
-        details:
-          details && Object.keys(details).length > 0
-            ? (details as Prisma.InputJsonValue)
-            : undefined,
+        startTime: startTimeVal,
+        endTime: endTimeVal,
+        workoutType: workoutTypeVal,
+        ...(repsInt != null && { reps: repsInt }),
+        ...(caloriesInt != null && { calories: caloriesInt }),
+        ...(detailsJson != null && { details: detailsJson }),
       } as Prisma.WorkoutLogUncheckedCreateInput,
     });
     return NextResponse.json(log);
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "처리 실패" }, { status: 500 });
+    console.error("workouts POST error:", e);
+    const message = e instanceof Error ? e.message : "처리 실패";
+    return NextResponse.json({ error: "처리 실패", debug: message }, { status: 500 });
   }
 }
 
