@@ -1,5 +1,7 @@
 "use client";
 
+import { getWeekRange } from "@/lib/week";
+
 function calcDurationMin(start: string | null, end: string | null): number {
   if (!start || !end) return 0;
   const [sh, sm] = start.split(":").map(Number);
@@ -32,20 +34,6 @@ function getLast7Days(): string[] {
     out.push(x.toISOString().slice(0, 10));
   }
   return out;
-}
-
-function getWeekRange(): { start: string; end: string } {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(now);
-  monday.setDate(diff);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  return {
-    start: monday.toISOString().slice(0, 10),
-    end: sunday.toISOString().slice(0, 10),
-  };
 }
 
 const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -93,33 +81,33 @@ export function WorkoutStatsPanel({
   const totalTimeStr = totalHours > 0 ? `${totalHours}시간 ${totalMins}분` : `${totalMins}분`;
 
   return (
-    <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/70 p-3 sm:p-4 overflow-y-auto" role="dialog" aria-modal="true">
-      <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-2xl w-full max-w-[calc(100vw-1.5rem)] sm:max-w-2xl max-h-[90dvh] overflow-y-auto my-auto">
+    <div className="fixed inset-0 z-20 flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4 overflow-y-auto pt-safe pb-safe" role="dialog" aria-modal="true">
+      <div className="rounded-t-2xl sm:rounded-2xl border border-[hsl(var(--border))] border-b-0 sm:border-b bg-[hsl(var(--card))] shadow-2xl w-full max-w-[100vw] sm:max-w-2xl max-h-[90dvh] overflow-y-auto my-0 sm:my-auto min-w-0">
         <div className="p-4 sm:p-5 border-b border-[hsl(var(--border))] flex items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">운동 통계</h2>
-          <div className="flex gap-2">
+          <h2 className="text-base sm:text-lg font-semibold text-[hsl(var(--foreground))] truncate min-w-0">운동 통계</h2>
+          <div className="flex gap-2 shrink-0">
             <button
               type="button"
               onClick={onEdit}
-              className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))]"
+              className="rounded-lg border border-[hsl(var(--border))] px-3 py-2.5 sm:py-1.5 text-sm text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] min-h-[44px] min-w-[52px] sm:min-h-0 sm:min-w-0 flex items-center justify-center active:scale-[0.98] touch-manipulation"
             >
               수정
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg bg-[hsl(var(--muted))] px-3 py-1.5 text-sm hover:bg-[hsl(var(--muted))]/80"
+              className="rounded-lg bg-[hsl(var(--muted))] px-3 py-2.5 sm:py-1.5 text-sm hover:bg-[hsl(var(--muted))]/80 min-h-[44px] min-w-[52px] sm:min-h-0 sm:min-w-0 flex items-center justify-center active:scale-[0.98] touch-manipulation"
             >
               닫기
             </button>
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 space-y-5 sm:space-y-6">
+        <div className="p-4 sm:p-5 space-y-4 sm:space-y-6 pb-safe">
           {/* 선택한 세션 요약 */}
-          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 p-4">
+          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 p-3 sm:p-4">
             <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-2">이번 세션</h3>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
               <dt className="text-[hsl(var(--muted-foreground))]">날짜</dt>
               <dd>{session.date}</dd>
               <dt className="text-[hsl(var(--muted-foreground))]">종목</dt>
@@ -161,17 +149,17 @@ export function WorkoutStatsPanel({
 
           {/* 통계 카드 */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-            <div className="rounded-xl border border-[hsl(var(--accent))]/30 bg-[hsl(var(--accent))]/10 p-4">
+            <div className="rounded-xl border border-[hsl(var(--accent))]/30 bg-[hsl(var(--accent))]/10 p-3 sm:p-4">
               <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">이번 주</p>
-              <p className="text-2xl font-bold text-[hsl(var(--accent))]">{weekCount}회</p>
+              <p className="text-xl sm:text-2xl font-bold text-[hsl(var(--accent))]">{weekCount}회</p>
             </div>
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 p-4">
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 p-3 sm:p-4">
               <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">오늘</p>
-              <p className="text-2xl font-bold text-[hsl(var(--foreground))]">{todayCount}회</p>
+              <p className="text-xl sm:text-2xl font-bold text-[hsl(var(--foreground))]">{todayCount}회</p>
             </div>
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 p-4 col-span-2 sm:col-span-1">
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/40 p-3 sm:p-4 col-span-2 sm:col-span-1">
               <p className="text-xs text-[hsl(var(--muted-foreground))] mb-1">이번 주 총 시간</p>
-              <p className="text-xl font-bold text-[hsl(var(--foreground))]">{totalTimeStr}</p>
+              <p className="text-lg sm:text-xl font-bold text-[hsl(var(--foreground))] break-words">{totalTimeStr}</p>
             </div>
           </div>
 

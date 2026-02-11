@@ -14,7 +14,7 @@ export async function PATCH(
   const { id } = params;
   try {
     const body = await req.json();
-    const parsed = workoutLogBody.pick({ attended: true, startTime: true, endTime: true, workoutType: true, reps: true, details: true }).partial().safeParse(body);
+    const parsed = workoutLogBody.pick({ attended: true, startTime: true, endTime: true, workoutType: true, reps: true, calories: true, details: true }).partial().safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.flatten().fieldErrors },
@@ -27,7 +27,7 @@ export async function PATCH(
     if (!existing || existing.userId !== participantId) {
       return NextResponse.json({ error: "기록을 찾을 수 없습니다." }, { status: 404 });
     }
-    const { attended, startTime, endTime, workoutType, reps, details } = parsed.data;
+    const { attended, startTime, endTime, workoutType, reps, calories, details } = parsed.data;
     const s = startTime !== undefined ? (startTime?.trim() || null) : existing.startTime;
     const e = endTime !== undefined ? (endTime?.trim() || null) : existing.endTime;
     if (s && e) {
@@ -48,6 +48,7 @@ export async function PATCH(
         ...(endTime !== undefined && { endTime: endTime?.trim() || null }),
         ...(workoutType !== undefined && { workoutType: workoutType?.trim() || null }),
         ...(reps !== undefined && { reps: reps ?? null }),
+        ...(calories !== undefined && { calories: calories ?? null }),
         ...(details !== undefined && { details }),
       },
     });

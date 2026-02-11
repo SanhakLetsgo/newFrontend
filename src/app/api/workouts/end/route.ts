@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const { date, endTime: clientEndTime, reps, details } = parsed.data;
+    const { date, endTime: clientEndTime, reps, calories, details } = parsed.data;
     const allForDate = await prisma.workoutLog.findMany({
       where: { userId: participantId, date, startTime: { not: null } },
     });
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
       data: {
         endTime,
         ...(reps != null && { reps }),
+        ...(calories != null && { calories }),
         ...(details != null && Object.keys(details).length > 0 && { details }),
       },
     });

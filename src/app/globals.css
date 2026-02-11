@@ -23,6 +23,12 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* 모바일 safe area (노치·홈 인디케이터) */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0); }
+.pt-safe { padding-top: env(safe-area-inset-top, 0); }
+.pl-safe { padding-left: env(safe-area-inset-left, 0); }
+.pr-safe { padding-right: env(safe-area-inset-right, 0); }
+
 body {
   @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))] antialiased;
   font-feature-settings: "rlig" 1, "calt" 1;
@@ -53,4 +59,14 @@ textarea::placeholder {
 /* 버튼·링크 호버 전환 */
 a, button {
   @apply transition-colors duration-200;
+}
+
+/* 운동 참여 현황 – 뛰는 모션 */
+@keyframes run-step {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.08); }
+}
+@keyframes bar-grow {
+  from { transform: scaleX(0); opacity: 0.8; }
+  to { transform: scaleX(1); opacity: 1; }
 }
