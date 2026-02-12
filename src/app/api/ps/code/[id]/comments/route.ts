@@ -39,7 +39,7 @@ export async function POST(req: Request, { params }: Params) {
         { status: 400 }
       );
     }
-    const comment = await db.psCodePostComment.create({
+    const comment = (await db.psCodePostComment.create({
       data: {
         codePostId,
         userId: participantId,
@@ -48,8 +48,8 @@ export async function POST(req: Request, { params }: Params) {
         language: parsed.data.language?.trim() || null,
       },
       include: { user: { select: { id: true, name: true } } },
-    });
-    const commenterName = (comment.user as { name: string | null })?.name ?? "알 수 없음";
+    })) as { user: { id: string; name: string | null } | null };
+    const commenterName = comment.user?.name ?? "알 수 없음";
     createCodeCommentNotifications(codePostId, participantId, commenterName).catch((err) =>
       console.error("Code comment notification error:", err)
     );
