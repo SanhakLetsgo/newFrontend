@@ -29,6 +29,7 @@ export function PSCodeViewModal({
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [viewingCommentCode, setViewingCommentCode] = useState<{ code: string; language: string; userName: string } | null>(null);
 
   const canDeleteComment = (comment: CommentRow) =>
     post.userId === currentUserId || comment.user?.id === currentUserId;
@@ -187,13 +188,22 @@ export function PSCodeViewModal({
                     </div>
                     <p className="text-sm text-zinc-200 whitespace-pre-wrap">{c.content}</p>
                     {c.code?.trim() && (
-                      <div className="mt-3 rounded-lg border border-white/10 overflow-hidden">
-                        <PSCodeEditor
-                          value={c.code}
-                          readOnly
-                          language={c.language ?? "javascript"}
-                          minHeight="120px"
-                        />
+                      <div className="mt-3">
+                        <div className="rounded-lg border border-white/10 overflow-hidden">
+                          <PSCodeEditor
+                            value={c.code}
+                            readOnly
+                            language={c.language ?? "javascript"}
+                            minHeight="120px"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setViewingCommentCode({ code: c.code!, language: c.language ?? "javascript", userName: c.user?.name ?? "이름 없음" })}
+                          className="mt-1.5 text-xs text-amber-400 hover:text-amber-300"
+                        >
+                          전체보기
+                        </button>
                       </div>
                     )}
                   </li>
@@ -254,6 +264,46 @@ export function PSCodeViewModal({
           </div>
         </div>
       </div>
+
+      {/* 댓글 코드 전체보기 모달 */}
+      {viewingCommentCode && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={() => setViewingCommentCode(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="comment-code-fullview-title"
+        >
+          <div
+            className="relative w-full max-w-2xl max-h-[85dvh] rounded-2xl border border-white/20 bg-zinc-900 shadow-2xl overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between shrink-0 border-b border-white/10 bg-zinc-800/80 px-4 py-3">
+              <h3 id="comment-code-fullview-title" className="text-sm font-semibold text-zinc-200">
+                {viewingCommentCode.userName}님 댓글 코드 전체보기
+              </h3>
+              <button
+                type="button"
+                onClick={() => setViewingCommentCode(null)}
+                className="rounded-lg p-2 text-zinc-400 hover:bg-white/10 hover:text-zinc-100"
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="rounded-xl border border-white/10 overflow-hidden">
+                <PSCodeEditor
+                  value={viewingCommentCode.code}
+                  readOnly
+                  language={viewingCommentCode.language}
+                  minHeight="400px"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

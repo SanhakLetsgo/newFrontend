@@ -75,14 +75,28 @@ function calcRunningCalories(km: number, min: number, weightKg: number): number 
   return 0;
 }
 
-/** 웨이트: MET 4, 세트당 약 2.5분 가정 */
+/**
+ * 웨이트 운동 칼로리 계산 (시간 + 볼륨 기반)
+ *
+ * 30분 스쿼트 200~300kcal, 푸쉬업 150~250kcal 등 무산소운동 소모량에 맞춤
+ * - 시간 항: 분 × 체중 × 0.095 (무산소운동 소모치 반영)
+ * - 볼륨 항: reps×kg × 0.008 (운동량에 따른 보정)
+ *
+ * 예: 1세트 10회×50kg, 체중70kg ≈ 17 + 4 ≈ 21 kcal
+ */
 function calcWeightsCalories(sets: number, volumeKg: number, weightKg: number): number {
   if (weightKg <= 0) weightKg = DEFAULT_BODY_WEIGHT_KG;
-  const timeHours = (sets * 2.5) / 60;
-  const met = 4;
-  const base = met * weightKg * timeHours;
-  const volumeTerm = volumeKg * 0.012;
-  return base + volumeTerm;
+  const minutesPerSet = 2.5;
+  const totalMinutes = sets * minutesPerSet;
+  const timeBased = totalMinutes * weightKg * 0.095;
+  const volumeBased = volumeKg * 0.008;
+  return timeBased + volumeBased;
+}
+
+/** 세트당 칼로리 (1세트, reps×kg 볼륨 기준) */
+function calcPerSetCalories(reps: number, kg: number, bodyWeightKg: number): number {
+  if (reps <= 0 || kg <= 0) return 0;
+  return calcWeightsCalories(1, reps * kg, bodyWeightKg);
 }
 
 function estimateCaloriesFromDetails(
@@ -94,6 +108,18 @@ function estimateCaloriesFromDetails(
   const min = Number(details["시간(분)"]) || 0;
   const km = Number(details["거리(km)"]) || 0;
   if (km > 0 || min > 0) return Math.max(0, Math.round(calcRunningCalories(km, min, weight))) || null;
+
+  const setsArr = details["sets"] as { reps?: number; kg?: number; calories?: number }[] | undefined;
+  if (setsArr && Array.isArray(setsArr) && setsArr.length > 0) {
+    const hasCalories = setsArr.some((s) => s?.calories != null && s.calories > 0);
+    if (hasCalories) {
+      const sum = setsArr.reduce((a, s) => a + (s?.calories ?? 0), 0);
+      return sum > 0 ? sum : null;
+    }
+    const totalSets = setsArr.length;
+    const volume = setsArr.reduce((a, s) => a + ((s?.reps ?? 0) * (s?.kg ?? 0)), 0);
+    return Math.max(0, Math.round(calcWeightsCalories(totalSets, volume, weight))) || null;
+  }
 
   const kg = Number(details["kg"]) || 0;
   const setsRepsText = String(details["횟수/세트"] ?? "").trim();
@@ -137,8 +163,7 @@ export function WorkoutsView({
   const [showStartModal, setShowStartModal] = useState(false);
   const [category, setCategory] = useState<"treadmill" | "other" | null>(null);
   const [otherTypeName, setOtherTypeName] = useState("");
-  const [otherSets, setOtherSets] = useState("");
-  const [otherKg, setOtherKg] = useState("");
+  const [otherSetsData, setOtherSetsData] = useState<{ reps: string; kg: string }[]>([{ reps: "", kg: "" }]);
   const [bodyWeightKg, setBodyWeightKg] = useState("");
   const [endCaloriesInput, setEndCaloriesInput] = useState("");
   const [statsSession, setStatsSession] = useState<Log | null>(null);
@@ -150,6 +175,7 @@ export function WorkoutsView({
   const [editReps, setEditReps] = useState("");
   const [editCalories, setEditCalories] = useState("");
   const [editDetails, setEditDetails] = useState<{ key: string; value: string }[]>([]);
+  const [editSets, setEditSets] = useState<{ reps: number; kg: number; calories?: number }[]>([]);
   const [showManual, setShowManual] = useState(false);
   const [manualDate, setManualDate] = useState(getClientDate());
   const [manualStart, setManualStart] = useState("");
@@ -188,7 +214,22 @@ export function WorkoutsView({
 
   function detailsToRows(d: unknown): { key: string; value: string }[] {
     if (d == null || typeof d !== "object" || Array.isArray(d)) return [];
-    return Object.entries(d as Record<string, unknown>).map(([k, v]) => ({ key: k, value: String(v) }));
+    return Object.entries(d as Record<string, unknown>)
+      .filter(([k]) => k !== "sets")
+      .map(([k, v]) => ({ key: k, value: String(v) }));
+  }
+
+  function parseDetailsSets(d: unknown): { reps: number; kg: number; calories?: number }[] {
+    if (d == null || typeof d !== "object") return [];
+    const sets = (d as Record<string, unknown>)["sets"];
+    if (!Array.isArray(sets)) return [];
+    return sets
+      .filter((s): s is Record<string, unknown> => s != null && typeof s === "object")
+      .map((s) => ({
+        reps: Number(s.reps) || 0,
+        kg: Number(s.kg) || 0,
+        ...(s.calories != null && Number(s.calories) > 0 && { calories: Number(s.calories) }),
+      }));
   }
 
   function rowsToDetails(rows: { key: string; value: string }[]): Record<string, string | number> | undefined {
@@ -212,13 +253,28 @@ export function WorkoutsView({
     setEditReps(log.reps != null ? String(log.reps) : "");
     setEditCalories(log.calories != null ? String(log.calories) : "");
     setEditDetails(detailsToRows(log.details));
+    setEditSets(parseDetailsSets(log.details).length > 0 ? parseDetailsSets(log.details) : []);
   };
 
   const saveEdit = async () => {
     if (!editModal) return;
     setBusy(true);
     try {
-      const details = rowsToDetails(editDetails);
+      const baseDetails = rowsToDetails(editDetails);
+      const details =
+        editSets.length > 0
+          ? {
+              ...baseDetails,
+              sets: editSets.map((s) => ({
+                reps: s.reps || 0,
+                kg: s.kg || 0,
+                calories: (() => {
+                  const c = calcPerSetCalories(s.reps || 0, s.kg || 0, bodyWeightNum ?? DEFAULT_BODY_WEIGHT_KG);
+                  return c > 0 ? Math.round(c) : undefined;
+                })(),
+              })),
+            }
+          : baseDetails;
       const repsNum = editReps.trim() === "" ? null : Math.max(0, Math.round(Number(editReps))) || null;
       const calNum = editCalories.trim() === "" ? null : Math.max(0, Math.round(Number(editCalories))) || null;
       const res = await fetch(`/api/workouts/log/${editModal.id}`, {
@@ -291,8 +347,7 @@ export function WorkoutsView({
         setShowStartModal(false);
         setCategory(null);
         setOtherTypeName("");
-        setOtherSets("");
-        setOtherKg("");
+        setOtherSetsData([{ reps: "", kg: "" }]);
         setTreadmillMinutes("");
         setTreadmillDistance("");
         setEndCaloriesInput("");
@@ -304,29 +359,35 @@ export function WorkoutsView({
     }
   };
 
-  const buildDetails = (): Record<string, string | number> | undefined => {
+  const buildDetails = (): Record<string, unknown> | undefined => {
     if (category === "treadmill") {
-      const d: Record<string, string | number> = {};
+      const d: Record<string, unknown> = {};
       if (treadmillMinutes.trim()) d["시간(분)"] = Number(treadmillMinutes) || 0;
       if (treadmillDistance.trim()) d["거리(km)"] = Number(treadmillDistance) || 0;
       return Object.keys(d).length ? d : undefined;
     }
     if (category === "other") {
-      const d: Record<string, string | number> = {};
-      if (otherSets.trim()) d["횟수/세트"] = otherSets.trim();
-      if (otherKg.trim()) d["kg"] = Number(otherKg) || 0;
-      return Object.keys(d).length ? d : undefined;
+      const validSets = otherSetsData.filter((s) => (s.reps.trim() || s.kg.trim()));
+      if (validSets.length === 0) return undefined;
+      const w = bodyWeightNum ?? DEFAULT_BODY_WEIGHT_KG;
+      const sets = validSets.map((s) => {
+        const reps = Number(s.reps) || 0;
+        const kg = Number(s.kg) || 0;
+        const calories = calcPerSetCalories(reps, kg, w);
+        return { reps, kg, calories: calories > 0 ? Math.round(calories) : undefined };
+      });
+      return { sets };
     }
     const isTreadmill = TREADMILL_TYPES.some((t) => workoutType.trim().toLowerCase().includes(t.toLowerCase()));
     if (isTreadmill) {
-      const d: Record<string, string | number> = {};
+      const d: Record<string, unknown> = {};
       if (treadmillMinutes.trim()) d["시간(분)"] = Number(treadmillMinutes) || 0;
       if (treadmillDistance.trim()) d["거리(km)"] = Number(treadmillDistance) || 0;
       return Object.keys(d).length ? d : undefined;
     }
     const entries = customDetails.filter((x) => x.key.trim()).map((x) => [x.key.trim(), x.value.trim()] as const);
     if (entries.length === 0) return undefined;
-    const obj: Record<string, string | number> = {};
+    const obj: Record<string, unknown> = {};
     for (const [k, v] of entries) {
       obj[k] = Number(v) === Number(v) ? Number(v) : v;
     }
@@ -349,12 +410,20 @@ export function WorkoutsView({
   })();
 
   const otherEstimate = (() => {
-    const kg = Number(otherKg) || 0;
-    const sr = parseSetsReps(otherSets);
-    if (kg <= 0 || !sr) return null;
-    const volume = sr.sets * sr.reps * kg;
-    const w = bodyWeightNum ?? DEFAULT_BODY_WEIGHT_KG;
-    return Math.max(0, Math.round(calcWeightsCalories(sr.sets, volume, w))) || null;
+    const details = buildDetails() as { sets?: { reps?: number; kg?: number; calories?: number }[] } | undefined;
+    const sets = details?.sets;
+    if (sets && sets.length > 0) {
+      const hasCalories = sets.some((s) => s.calories != null && s.calories > 0);
+      if (hasCalories) {
+        const sum = sets.reduce((a, s) => a + (s.calories ?? 0), 0);
+        return sum > 0 ? sum : null;
+      }
+      const totalSets = sets.length;
+      const volume = sets.reduce((a, s) => a + (s.reps ?? 0) * (s.kg ?? 0), 0);
+      const w = bodyWeightNum ?? DEFAULT_BODY_WEIGHT_KG;
+      return Math.max(0, Math.round(calcWeightsCalories(totalSets, volume, w))) || null;
+    }
+    return null;
   })();
 
   const endToday = async () => {
@@ -385,8 +454,7 @@ export function WorkoutsView({
         setTreadmillMinutes("");
         setTreadmillDistance("");
         setEndCaloriesInput("");
-        setOtherSets("");
-        setOtherKg("");
+        setOtherSetsData([{ reps: "", kg: "" }]);
         setCustomDetails([]);
         router.refresh();
       }
@@ -594,19 +662,70 @@ export function WorkoutsView({
                   <span className="text-xs text-[hsl(var(--muted-foreground))]">종목명</span>
                   <input type="text" value={otherTypeName} onChange={(e) => setOtherTypeName(e.target.value)} placeholder="예: 스쿼트, 벤치프레스" className="w-full rounded-lg border border-[hsl(var(--border))] px-3 py-2.5 sm:py-2 text-base sm:text-sm min-h-[44px]" />
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="block">
-                    <span className="text-xs text-[hsl(var(--muted-foreground))]">횟수/세트</span>
-                    <input type="text" value={otherSets} onChange={(e) => setOtherSets(e.target.value)} placeholder="예: 3세트 10회" className="w-full rounded-lg border border-[hsl(var(--border))] px-3 py-2.5 sm:py-2 text-base sm:text-sm min-h-[44px]" />
-                  </label>
-                  <label className="block">
-                    <span className="text-xs text-[hsl(var(--muted-foreground))]">kg</span>
-                    <input type="number" min={0} value={otherKg} onChange={(e) => setOtherKg(e.target.value)} placeholder="0" className="w-full rounded-lg border border-[hsl(var(--border))] px-3 py-2.5 sm:py-2 text-base sm:text-sm min-h-[44px]" />
-                  </label>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-[hsl(var(--muted-foreground))]">세트별 입력 (횟수 · kg) → 칼로리 자동 계산</span>
+                    <button
+                      type="button"
+                      onClick={() => setOtherSetsData((p) => [...p, { reps: "", kg: "" }])}
+                      className="text-xs text-[hsl(var(--accent))] hover:underline"
+                    >
+                      + 세트 추가
+                    </button>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {otherSetsData.map((set, i) => {
+                      const reps = Number(set.reps) || 0;
+                      const kg = Number(set.kg) || 0;
+                      const w = bodyWeightNum ?? DEFAULT_BODY_WEIGHT_KG;
+                      const kcal = reps > 0 && kg > 0 ? Math.round(calcPerSetCalories(reps, kg, w)) : null;
+                      return (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs text-[hsl(var(--muted-foreground))] w-6 shrink-0">{i + 1}세트</span>
+                        <input
+                          type="number"
+                          min={0}
+                          placeholder="횟수"
+                          value={set.reps}
+                          onChange={(e) =>
+                            setOtherSetsData((p) =>
+                              p.map((s, j) => (j === i ? { ...s, reps: e.target.value } : s))
+                            )
+                          }
+                          className="flex-1 min-w-0 rounded-lg border border-[hsl(var(--border))] px-2 py-2 text-sm"
+                        />
+                        <input
+                          type="number"
+                          min={0}
+                          placeholder="kg"
+                          value={set.kg}
+                          onChange={(e) =>
+                            setOtherSetsData((p) =>
+                              p.map((s, j) => (j === i ? { ...s, kg: e.target.value } : s))
+                            )
+                          }
+                          className="flex-1 min-w-0 rounded-lg border border-[hsl(var(--border))] px-2 py-2 text-sm"
+                        />
+                        <span className="flex-1 min-w-0 text-xs text-amber-600 tabular-nums px-2 py-2">
+                          {kcal != null ? `≈ ${kcal} kcal` : "—"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOtherSetsData((p) => (p.length > 1 ? p.filter((_, j) => j !== i) : p))
+                          }
+                          className="shrink-0 text-red-400 hover:text-red-300 text-sm px-1 min-w-[28px]"
+                          aria-label="삭제"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    );})}
+                  </div>
                 </div>
                 {otherEstimate != null && (
                   <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                    예상 칼로리(자동) · <span className="font-semibold text-amber-600">{otherEstimate} kcal</span>
+                    총 칼로리 · <span className="font-semibold text-amber-600">{otherEstimate} kcal</span> (횟수·kg 기반 자동 계산)
                   </p>
                 )}
               </div>
@@ -769,6 +888,8 @@ export function WorkoutsView({
                                 const details = (log.details ?? {}) as Record<string, unknown>;
                                 const min = Number(details["시간(분)"]) || 0;
                                 const km = Number(details["거리(km)"]) || 0;
+                                const sets = details["sets"] as { reps?: number; kg?: number; calories?: number }[] | undefined;
+                                const hasSets = sets && Array.isArray(sets) && sets.length > 0;
                                 return (
                                   <div
                                     key={log.id}
@@ -791,6 +912,19 @@ export function WorkoutsView({
                                           )}
                                         </span>
                                       </div>
+                                      {hasSets && (
+                                        <div className="text-xs text-[hsl(var(--muted-foreground))] space-y-1">
+                                          {sets.map((s, i) => (
+                                            <div key={i} className="flex gap-3">
+                                              <span>{i + 1}세트</span>
+                                              <span>{(s.reps ?? 0)}회 × {(s.kg ?? 0)}kg</span>
+                                              {s.calories != null && s.calories > 0 && (
+                                                <span className="text-amber-600">{s.calories} kcal</span>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
                                       {(min > 0 || km > 0) && (
                                         <div className="flex gap-4 text-xs text-[hsl(var(--muted-foreground))]">
                                           {min > 0 && <span>⏱ {min}분</span>}
@@ -1063,6 +1197,79 @@ export function WorkoutsView({
                   placeholder="10:00"
                   className="w-full rounded-md border border-[hsl(var(--border))] px-3 py-2.5 sm:py-2 text-sm min-h-[44px] sm:min-h-0"
                 />
+              </div>
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm">세트별 기록 (횟수 · kg) → 칼로리 자동 계산</label>
+                  {editSets.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setEditSets([{ reps: 0, kg: 0 }])}
+                      className="text-xs text-[hsl(var(--accent))] hover:underline"
+                    >
+                      + 세트 추가
+                    </button>
+                  )}
+                </div>
+              {editSets.length > 0 && (
+                <div>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {editSets.map((set, i) => {
+                      const reps = set.reps || 0;
+                      const kg = set.kg || 0;
+                      const kcal = reps > 0 && kg > 0
+                        ? Math.round(calcPerSetCalories(reps, kg, bodyWeightNum ?? DEFAULT_BODY_WEIGHT_KG))
+                        : null;
+                      return (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs text-[hsl(var(--muted-foreground))] w-8 shrink-0">{i + 1}세트</span>
+                        <input
+                          type="number"
+                          min={0}
+                          placeholder="횟수"
+                          value={set.reps || ""}
+                          onChange={(e) =>
+                            setEditSets((p) =>
+                              p.map((s, j) => (j === i ? { ...s, reps: Number(e.target.value) || 0 } : s))
+                            )
+                          }
+                          className="flex-1 min-w-0 rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm"
+                        />
+                        <input
+                          type="number"
+                          min={0}
+                          placeholder="kg"
+                          value={set.kg || ""}
+                          onChange={(e) =>
+                            setEditSets((p) =>
+                              p.map((s, j) => (j === i ? { ...s, kg: Number(e.target.value) || 0 } : s))
+                            )
+                          }
+                          className="flex-1 min-w-0 rounded border border-[hsl(var(--border))] px-2 py-1.5 text-sm"
+                        />
+                        <span className="flex-1 min-w-0 text-xs text-amber-600 tabular-nums px-2 py-1.5">
+                          {kcal != null ? `≈ ${kcal} kcal` : "—"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setEditSets((p) => (p.length > 1 ? p.filter((_, j) => j !== i) : p))}
+                          className="shrink-0 text-red-400 hover:text-red-300 text-xs"
+                          aria-label="삭제"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    );})}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditSets((p) => [...p, { reps: 0, kg: 0 }])}
+                    className="mt-1 text-xs text-[hsl(var(--accent))] hover:underline"
+                  >
+                    + 세트 추가
+                  </button>
+                </div>
+              )}
               </div>
               <div>
                 <label className="block text-sm mb-1 text-[hsl(var(--muted-foreground))]">상세 기록 (선택)</label>
