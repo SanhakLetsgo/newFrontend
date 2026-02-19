@@ -2,6 +2,15 @@ import { z } from "zod";
 
 const timeRegex = /^([01]?\d|2[0-3]):([0-5]\d)$/;
 const detailsValue = z.union([z.string(), z.number(), z.boolean()]);
+const setItemSchema = z.object({
+  reps: z.number().optional(),
+  kg: z.number().optional(),
+  calories: z.number().optional(),
+});
+const detailsValueWithSets = z.union([
+  detailsValue,
+  z.array(setItemSchema),
+]);
 
 export const workoutLogBody = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "YYYY-MM-DD 형식"),
@@ -11,7 +20,7 @@ export const workoutLogBody = z.object({
   workoutType: z.string().max(100).nullable().optional(),
   reps: z.number().int().min(0).nullable().optional(),
   calories: z.number().int().min(0).nullable().optional(),
-  details: z.record(z.string(), detailsValue).nullable().optional(),
+  details: z.record(z.string(), detailsValueWithSets).nullable().optional(),
 });
 
 export const workoutStartBody = z.object({
@@ -25,7 +34,7 @@ export const workoutEndBody = z.object({
   endTime: z.string().regex(timeRegex).optional(),
   reps: z.number().int().min(0).nullable().optional(),
   calories: z.number().int().min(0).nullable().optional(),
-  details: z.record(z.string(), detailsValue).optional(),
+  details: z.record(z.string(), detailsValueWithSets).optional(),
 });
 
 /** 수동으로 운동 기록 추가 시 사용 */
@@ -37,7 +46,7 @@ export const workoutCreateBody = z.object({
   workoutType: z.string().max(100).nullable().optional(),
   reps: z.number().int().min(0).nullable().optional(),
   calories: z.number().int().min(0).nullable().optional(),
-  details: z.record(z.string(), detailsValue).nullable().optional(),
+  details: z.record(z.string(), detailsValueWithSets).nullable().optional(),
 });
 
 export const paperBody = z.object({
